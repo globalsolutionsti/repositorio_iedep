@@ -1,15 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-<div class="header">
-  <h1>Gestor Documental</h1>
-  <div class="user">
-    <span id="nombreUsuario"></span>
-    <button onclick="logout()">Salir</button>
-  </div>
-</div>  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="css/styles.css">
 </head>
+
 <body>
 
 <div class="layout">
@@ -20,9 +15,13 @@
 
   <div class="main">
 
+    <!-- ✅ SOLO UN HEADER -->
     <div class="header">
       <h1>Gestor Documental</h1>
-      <button onclick="logout()">Salir</button>
+      <div class="user">
+        <span id="nombreUsuario"></span>
+        <button onclick="logout()">Salir</button>
+      </div>
     </div>
 
     <div class="content">
@@ -47,5 +46,6 @@
 </div>
 
 <script src="js/dashboard.js"></script>
+
 </body>
 </html>
