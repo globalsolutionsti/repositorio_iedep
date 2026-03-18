@@ -67,12 +67,10 @@ function cargar() {
 
   const cacheKey = "estructura_" + padreActual;
   const cache = localStorage.getItem(cacheKey);
-  let usoCache = false;
 
   if (cache) {
     try {
       render(JSON.parse(cache));
-      usoCache = true;
     } catch (e) {
       console.warn("Cache corrupto");
     }
@@ -88,10 +86,7 @@ function cargar() {
       console.error(err);
       toast("Error cargando estructura");
     })
-    .finally(() => {
-      // 🔹 Si no usamos cache o usamos cache corrupto, siempre cerrar loader
-      hideGlobalLoader();
-    });
+    .finally(() => hideGlobalLoader());
 }
 
 // 🔥 RENDER
@@ -316,7 +311,7 @@ function showGlobalLoader() {
     el.classList.remove("hidden");
 
     loaderTimeout = setTimeout(() => {
-      console.warn("Loader forzado a cerrar tras 10s");
+      console.warn("Loader global forzado a cerrar tras 10s");
       loaderCount = 0;
       el.classList.add("hidden");
     }, 10000);
