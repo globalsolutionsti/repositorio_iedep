@@ -35,6 +35,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // 🔥 OBTENER RAÍZ
 function init() {
+
+  showGlobalLoader();
+
   fetch(`${API}?action=getRoot`)
     .then(r => r.json())
     .then(root => {
@@ -53,19 +56,26 @@ function init() {
     })
     .catch(err => {
       console.error(err);
-      alert("Error cargando raíz");
+      toast("Error cargando raíz");
+      hideGlobalLoader();
     });
 }
 
-
 // 🔥 CARGAR ESTRUCTURA
 function cargar() {
+
+  showGlobalLoader();
+
   fetch(`${API}?action=getEstructura&padre=${padreActual}`)
     .then(r => r.json())
-    .then(data => render(data))
+    .then(data => {
+      render(data);
+      hideGlobalLoader();
+    })
     .catch(err => {
       console.error(err);
-      alert("Error cargando estructura");
+      toast("Error cargando estructura");
+      hideGlobalLoader();
     });
 }
 
@@ -406,4 +416,11 @@ function subirArchivoDirecto(file) {
   };
 
   reader.readAsDataURL(file);
+}
+function showGlobalLoader() {
+  document.getElementById("globalLoader").classList.remove("hidden");
+}
+
+function hideGlobalLoader() {
+  document.getElementById("globalLoader").classList.add("hidden");
 }
