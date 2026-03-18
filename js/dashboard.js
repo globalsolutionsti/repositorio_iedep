@@ -7,7 +7,6 @@ let user = null;
 
 // 🔥 INIT
 document.addEventListener("DOMContentLoaded", () => {
-
   try {
     const data = localStorage.getItem("usuario");
     if (data && data !== "undefined") {
@@ -32,13 +31,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  init();
+  init(); // Aquí NO se muestra el spinner global
 });
 
 // 🔥 ROOT
 function init() {
-  showGlobalLoader();
-
   fetch(`${API}?action=getRoot`)
     .then(r => r.json())
     .then(root => {
@@ -52,18 +49,17 @@ function init() {
       }];
 
       actualizarRuta();
-      cargar();
+      cargar(); // cargar() sí maneja su loader
     })
     .catch(err => {
       console.error(err);
       toast("Error cargando raíz");
-    })
-    .finally(() => hideGlobalLoader());
+    });
 }
 
 // 🔥 CARGAR (CACHE + LOADER ROBUSTO)
 function cargar() {
-  showGlobalLoader();
+  showGlobalLoader(); // Solo aquí se muestra
 
   const cacheKey = "estructura_" + padreActual;
   const cache = localStorage.getItem(cacheKey);
@@ -92,7 +88,6 @@ function cargar() {
 // 🔥 RENDER
 function render(data) {
   const cont = document.getElementById("explorador");
-
   if (!data || data.length === 0) {
     cont.innerHTML = "<p>Sin elementos</p>";
     return;
@@ -106,7 +101,6 @@ function render(data) {
     const nombre = row[1];
     const tipo = row[2];
     const driveId = row[4];
-
     const icono = obtenerIcono(nombre, tipo);
 
     html += `
@@ -143,21 +137,15 @@ function abrir(id, tipo, driveId, nombre) {
 // 🔥 RUTA
 function actualizarRuta() {
   const cont = document.getElementById("ruta");
-
-  cont.innerHTML = ruta.map((r, i) => {
-    return `<span style="cursor:pointer" onclick="irA(${i})">${r.nombre}</span>`;
-  }).join(" / ");
+  cont.innerHTML = ruta.map((r, i) => `<span style="cursor:pointer" onclick="irA(${i})">${r.nombre}</span>`).join(" / ");
 }
 
 // 🔥 NAVEGAR
 function irA(index) {
   const nivel = ruta[index];
-
   padreActual = nivel.id;
   padreDrive = nivel.drive;
-
   ruta = ruta.slice(0, index + 1);
-
   actualizarRuta();
   cargar();
 }
@@ -170,9 +158,7 @@ function irRaiz() {
 // 🔥 CACHE
 function limpiarCache() {
   Object.keys(localStorage).forEach(k => {
-    if (k.startsWith("estructura_")) {
-      localStorage.removeItem(k);
-    }
+    if (k.startsWith("estructura_")) localStorage.removeItem(k);
   });
 }
 
@@ -185,12 +171,7 @@ function nuevaCarpeta() {
 
   fetch(API, {
     method: "POST",
-    body: JSON.stringify({
-      action: "crearCarpeta",
-      nombre,
-      padre: padreActual,
-      padre_drive: padreDrive
-    }),
+    body: JSON.stringify({ action: "crearCarpeta", nombre, padre: padreActual, padre_drive: padreDrive }),
     headers: { "Content-Type": "text/plain;charset=utf-8" }
   })
   .then(r => r.json())
@@ -213,12 +194,10 @@ function nuevaCarpeta() {
 // 🔥 SUBIR
 function subir() {
   const fileInput = document.getElementById("fileInput");
-
   if (!fileInput.files.length) {
     toast("Selecciona un archivo");
     return;
   }
-
   subirArchivoDirecto(fileInput.files[0]);
 }
 
@@ -227,20 +206,12 @@ function subirArchivoDirecto(file) {
   mostrarLoader();
 
   const reader = new FileReader();
-
   reader.onload = function(e) {
     const base64 = e.target.result.split(",")[1];
 
     fetch(API, {
       method: "POST",
-      body: JSON.stringify({
-        action: "subirArchivo",
-        nombre: file.name,
-        tipo: file.type,
-        archivo: base64,
-        padre: padreActual,
-        padre_drive: padreDrive
-      }),
+      body: JSON.stringify({ action: "subirArchivo", nombre: file.name, tipo: file.type, archivo: base64, padre: padreActual, padre_drive: padreDrive }),
       headers: { "Content-Type": "text/plain;charset=utf-8" }
     })
     .then(r => r.json())
@@ -266,24 +237,14 @@ function subirArchivoDirecto(file) {
 // 🔥 ICONOS
 function obtenerIcono(nombre, tipo) {
   if (tipo === "carpeta") return "📁";
-
-  const ext = nombre.includes(".")
-    ? nombre.split(".").pop().toLowerCase()
-    : "";
-
+  const ext = nombre.includes(".") ? nombre.split(".").pop().toLowerCase() : "";
   switch (ext) {
     case "pdf": return "📕";
-    case "doc":
-    case "docx": return "📘";
-    case "xls":
-    case "xlsx": return "📗";
-    case "ppt":
-    case "pptx": return "📙";
-    case "jpg":
-    case "jpeg":
-    case "png": return "🖼️";
-    case "zip":
-    case "rar": return "🗜️";
+    case "doc": case "docx": return "📘";
+    case "xls": case "xlsx": return "📗";
+    case "ppt": case "pptx": return "📙";
+    case "jpg": case "jpeg": case "png": return "🖼️";
+    case "zip": case "rar": return "🗜️";
     case "mp4": return "🎬";
     case "mp3": return "🎵";
     default: return "📄";
@@ -291,87 +252,41 @@ function obtenerIcono(nombre, tipo) {
 }
 
 // 🔥 LOADER LOCAL
-function mostrarLoader() {
-  document.getElementById("loader").classList.remove("hidden");
-}
-
-function ocultarLoader() {
-  document.getElementById("loader").classList.add("hidden");
-}
+function mostrarLoader() { document.getElementById("loader").classList.remove("hidden"); }
+function ocultarLoader() { document.getElementById("loader").classList.add("hidden"); }
 
 // 🔥 LOADER GLOBAL ROBUSTO
 let loaderCount = 0;
 let loaderTimeout;
-
 function showGlobalLoader() {
   loaderCount++;
   const el = document.getElementById("globalLoader");
-
   if (loaderCount === 1) {
     el.classList.remove("hidden");
-
-    loaderTimeout = setTimeout(() => {
-      console.warn("Loader global forzado a cerrar tras 10s");
-      loaderCount = 0;
-      el.classList.add("hidden");
-    }, 10000);
+    loaderTimeout = setTimeout(() => { loaderCount = 0; el.classList.add("hidden"); }, 10000);
   }
 }
-
 function hideGlobalLoader(force = false) {
-  if (force) loaderCount = 0;
-  else loaderCount--;
-
-  if (loaderCount <= 0) {
-    loaderCount = 0;
-    const el = document.getElementById("globalLoader");
-    el.classList.add("hidden");
-    clearTimeout(loaderTimeout);
-  }
+  if (force) loaderCount = 0; else loaderCount--;
+  if (loaderCount <= 0) { loaderCount = 0; const el = document.getElementById("globalLoader"); el.classList.add("hidden"); clearTimeout(loaderTimeout); }
 }
 
 // 🔥 TOAST
-function toast(msg) {
-  const t = document.getElementById("toast");
-  t.innerText = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 3000);
-}
+function toast(msg) { const t = document.getElementById("toast"); t.innerText = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3000); }
 
 // 🔥 LOGOUT
-function logout() {
-  localStorage.removeItem("usuario");
-  window.location.href = "index.html";
-}
+function logout() { localStorage.removeItem("usuario"); window.location.href = "index.html"; }
 
 // 🔥 DRAG & DROP
 const dropZone = document.getElementById("dropZone");
-
-["dragenter", "dragover", "dragleave", "drop"].forEach(event => {
-  document.addEventListener(event, e => {
-    e.preventDefault();
-    e.stopPropagation();
-  }, false);
+["dragenter","dragover","dragleave","drop"].forEach(event => {
+  document.addEventListener(event, e => { e.preventDefault(); e.stopPropagation(); }, false);
 });
-
-document.addEventListener("dragenter", () => {
-  if (dropZone) dropZone.classList.remove("hidden");
-});
-
-document.addEventListener("dragleave", (e) => {
-  if (e.clientX === 0 && e.clientY === 0) {
-    if (dropZone) dropZone.classList.add("hidden");
-  }
-});
-
+document.addEventListener("dragenter", () => { if(dropZone) dropZone.classList.remove("hidden"); });
+document.addEventListener("dragleave", (e) => { if(e.clientX===0 && e.clientY===0){ if(dropZone) dropZone.classList.add("hidden"); }});
 document.addEventListener("drop", (e) => {
-  if (dropZone) dropZone.classList.add("hidden");
-
+  if(dropZone) dropZone.classList.add("hidden");
   const files = e.dataTransfer.files;
-  if (!files || files.length === 0) {
-    toast("No se detectó archivo");
-    return;
-  }
-
+  if(!files || files.length===0){ toast("No se detectó archivo"); return; }
   subirArchivoDirecto(files[0]);
 });
