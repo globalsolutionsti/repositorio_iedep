@@ -84,6 +84,11 @@ function abrir(id, tipo, driveId, nombre) {
 
   if (tipo === "carpeta") {
 
+    // 🔥 EVITAR DUPLICADOS
+    const ultimo = ruta[ruta.length - 1];
+
+    if (ultimo && ultimo.id === id) return;
+
     padreActual = id;
     padreDrive = driveId;
 
@@ -152,29 +157,30 @@ function subir() {
 
     const base64 = e.target.result.split(",")[1];
 
-    const url = `${API}?action=subirArchivo
-      &nombre=${encodeURIComponent(file.name)}
-      &tipo=${file.type}
-      &padre=${padreActual}
-      &padre_drive=${padreDrive}
-      &archivo=${encodeURIComponent(base64)}`;
-
-    console.log("SUBIDA URL:", url);
-
-    fetch(url)
+    fetch(API, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "subirArchivo",
+        nombre: file.name,
+        tipo: file.type,
+        archivo: base64,
+        padre: padreActual,
+        padre_drive: padreDrive
+      })
+    })
     .then(r => r.json())
     .then(res => {
-      console.log("RESPUESTA:", res);
 
       if(res.status){
-        alert("Archivo subido");
+        alert("Archivo subido correctamente");
         cargar();
       } else {
         alert("Error: " + res.error);
       }
+
     })
     .catch(err => {
-      console.error("ERROR:", err);
+      console.error(err);
       alert("Error real en subida");
     });
 
@@ -182,6 +188,7 @@ function subir() {
 
   reader.readAsDataURL(file);
 }
+
 
 function actualizarRuta() {
   const cont = document.getElementById("ruta");
