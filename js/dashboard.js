@@ -1,39 +1,87 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbz3yMl9gFYvv40j5HyK5QiKNf9TCIMTyd7zdR-9c2ryYvMT8c0NGp7JmtW7VrXs8qH2/exec";
 
-window.onload = () => {
-  const user = localStorage.getItem('usuario');
-  if(!user) {
-    window.location.href = 'index.html';
-  } else {
-    loadDocumentos();
-  }
-};
+let padreActual = 0;
+let padreDrive = "ID_ROOT";
 
-function loadDocumentos() {
-  fetch(API_URL, {
-    method: 'POST',
-    body: JSON.stringify({ action: 'getDocumentos' })
+function cargar() {
+  fetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "getEstructura",
+      padre: padreActual
+    })
   })
-  .then(res => res.json())
-  .then(data => {
-    const tbody = document.querySelector('#tablaDocs tbody');
-    tbody.innerHTML = '';
+  .then(r => r.json())
+  .then(render);
+}
 
-    data.forEach((row, i) => {
-      if(i === 0) return;
+function render(data) {
+  const cont = document.getElementById("explorador");
+  cont.innerHTML = "";
 
-      tbody.innerHTML += `
-        <tr>
-          <td>${row[1]}</td>
-          <td>${row[5]}</td>
-          <td>${row[4]}</td>
-          <td><a href="${row[3]}" target="_blank">Ver</a></td>
-        </tr>
-      `;
-    });
+  data.forEach(row => {
+    const tipo = row[2];
+    const icono = tipo === "carpeta" ? "📁" : "📄";
+
+    cont.innerHTML += `
+      <div class="card-item" onclick="abrir(${row[0]}, '${row[2]}', '${row[4]}')">
+        <div class="icon">${icono}</div>
+        <div>${row[1]}</div>
+      </div>
+    `;
   });
 }
 
-function subirArchivo() {
-  alert('Siguiente paso: integración con Google Drive');
+function abrir(id, tipo, driveId) {
+  if (tipo === "carpeta") {
+    padreActual = id;
+    padreDrive = driveId;
+    cargar();
+  } else {
+    window.open("https://drive.google.com/file/d/" + driveId);
+  }
 }
+
+function nuevaCarpeta() {
+  const nombre = prompt("Nombre carpeta");
+
+  fetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "crearCarpeta",
+      nombre,
+      padre: padreActual,
+      padre_drive: padreDrive
+    })
+  }).then(cargar);
+}
+
+function subir() {
+  const file = document.getElementById("fileInput").files[0];
+  const reader = new FileReader();
+
+  reader.onload = function() {
+    const base64 = reader.result.split(",")[1];
+
+    fetch(API, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "subirArchivo",
+        nombre: file.name,
+        tipo: file.type,
+        archivo: base64,
+        padre: padreActual,
+        padre_drive: padreDrive
+      })
+    }).then(cargar);
+  };
+
+  reader.readAsDataURL(file);
+}
+
+function logout() {
+  localStorage.clear();
+  window.location = "index.html";
+}
+
+window.onload = cargar;
