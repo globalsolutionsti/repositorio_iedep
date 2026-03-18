@@ -1,25 +1,24 @@
+const API = "https://script.google.com/macros/s/AKfycbw1ivWeBv0Fh6fiM9hQM_x8VXOtLpb_EhJHAxRVYwP5cyxNYBB7iTYFt8wyP5tppLGk/exec";
+
 const user = JSON.parse(localStorage.getItem("user"));
 
 if (!user) {
   window.location.href = "index.html";
 }
 
-const API = "https://script.google.com/macros/s/AKfycbwbY1bdXy9IJqBn9_pwF_5JNnHF3LDLbVR0Y1-Y1JYDtwiqkaWjt2V3tqfHGI76ZF-6/exec";
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("nombreUsuario").innerText = user.nombre;
+});
 
 let padreActual = 0;
 let padreDrive = "";
 
-document.getElementById("nombreUsuario").innerText = user.nombre;
-
-// 🔥 CARGAR ROOT REAL DESDE SHEETS
+// 🔥 OBTENER ROOT
 function init() {
-  fetch(API, {
-    method: "POST",
-    body: JSON.stringify({ action: "getRoot" })
-  })
+  fetch(`${API}?action=getRoot`)
   .then(r => r.json())
   .then(root => {
-    console.log("ROOT:", root); // 👈 DEBUG
+    console.log("ROOT:", root);
 
     padreActual = root.id;
     padreDrive = root.drive;
@@ -28,18 +27,14 @@ function init() {
   });
 }
 
+// 🔥 CARGAR ESTRUCTURA
 function cargar() {
-  fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "getEstructura",
-      padre: padreActual
-    })
-  })
+  fetch(`${API}?action=getEstructura&padre=${padreActual}`)
   .then(r => r.json())
   .then(render);
 }
 
+// 🔥 RENDER
 function render(data) {
   const cont = document.getElementById("explorador");
   cont.innerHTML = "";
@@ -57,36 +52,36 @@ function render(data) {
   });
 }
 
+// 🔥 ABRIR
 function abrir(id, tipo, driveId) {
   if (tipo === "carpeta") {
     padreActual = id;
     padreDrive = driveId;
     cargar();
   } else {
-    window.open("https://drive.google.com/file/d/" + driveId);
+    window.open(`https://drive.google.com/file/d/${driveId}`);
   }
 }
 
-// 🔥 NUEVA FUNCIÓN
+// 🔥 VOLVER A RAÍZ
 function irRaiz() {
   init();
 }
 
+// 🔥 CREAR CARPETA
 function nuevaCarpeta() {
   const nombre = prompt("Nombre carpeta");
 
-  fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "crearCarpeta",
-      nombre,
-      padre: padreActual,
-      padre_drive: padreDrive
-    })
-  }).then(() => cargar());
+  if (!nombre) return;
+
+  fetch(`${API}?action=crearCarpeta&nombre=${encodeURIComponent(nombre)}&padre=${padreActual}&padre_drive=${padreDrive}`)
+  .then(r => r.json())
+  .then(() => cargar());
 }
 
+// 🔥 SUBIR ARCHIVO (MEJORADO)
 function subir() {
+
   const fileInput = document.getElementById("fileInput");
 
   if (!fileInput.files.length) {
@@ -95,40 +90,44 @@ function subir() {
   }
 
   const file = fileInput.files[0];
+
+  if (file.size > 5 * 1024 * 1024) {
+    alert("Archivo demasiado grande (máx 5MB)");
+    return;
+  }
+
   const reader = new FileReader();
 
   reader.onload = function(e) {
+
     const base64 = e.target.result.split(",")[1];
 
-    fetch(API, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "subirArchivo",
-        nombre: file.name,
-        tipo: file.type,
-        archivo: base64,
-        padre: padreActual,
-        padre_drive: padreDrive
-      })
-    })
+    fetch(`${API}?action=subirArchivo
+      &nombre=${encodeURIComponent(file.name)}
+      &tipo=${file.type}
+      &padre=${padreActual}
+      &padre_drive=${padreDrive}
+      &archivo=${encodeURIComponent(base64)}`)
     .then(r => r.json())
     .then(res => {
-      if(res.status){
+      if (res.status) {
         alert("Archivo subido");
         cargar();
       } else {
-        console.error(res.error);
-        alert("Error real: " + res.error);
+        alert("Error: " + res.error);
       }
     });
+
   };
 
   reader.readAsDataURL(file);
 }
 
+// 🔥 LOGOUT
 function logout() {
   localStorage.clear();
-  window.location = "index.html";
+  window.location.href = "index.html";
 }
 
+// 🔥 INICIO
 window.onload = init;
