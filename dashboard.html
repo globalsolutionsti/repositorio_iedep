@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gestor Documental</title>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="dashboard">
+  <aside class="sidebar">
+    <h2>IEDEP</h2>
+    <ul>
+      <li onclick="loadDocumentos()">📂 Documentos</li>
+      <li>⚙️ Configuración</li>
+    </ul>
+  </aside>
+
+  <main class="content">
+    <h1>Gestor de Documentos</h1>
+
+    <button onclick="subirArchivo()">Subir Documento</button>
+
+    <table id="tablaDocs">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Área</th>
+          <th>Versión</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </main>
+</div>
+
+<script src="js/dashboard.js"></script>
+</body>
+</html>
