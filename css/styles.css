@@ -245,3 +245,27 @@ table td a:hover {
     width: 100%;
   }
 }
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 15px;
+}
+
+.card-item {
+  background: white;
+  border-radius: 10px;
+  padding: 15px;
+  text-align: center;
+  cursor: pointer;
+  transition: 0.2s;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.card-item:hover {
+  transform: translateY(-3px);
+}
+
+.icon {
+  font-size: 30px;
+  margin-bottom: 10px;
+}
