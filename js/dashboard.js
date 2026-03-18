@@ -20,14 +20,21 @@ document.addEventListener("DOMContentLoaded", () => {
     console.warn("Error parsing user:", e);
   }
 
-  console.log("USER:", user);
-
   if (!user) {
     window.location.href = "index.html";
     return;
   }
 
   document.getElementById("nombreUsuario").innerText = user.nombre;
+
+  // 🔥 EVENTO FILE INPUT
+  const fileInput = document.getElementById("fileInput");
+  if (fileInput) {
+    fileInput.addEventListener("change", function() {
+      const file = this.files[0];
+      document.getElementById("fileName").innerText = file ? file.name : "Ningún archivo seleccionado";
+    });
+  }
 
   init();
 });
@@ -61,16 +68,35 @@ function init() {
     });
 }
 
-// 🔥 CARGAR ESTRUCTURA
+
+// 🔥 CARGAR ESTRUCTURA (CON CACHE 🚀)
 function cargar() {
 
   showGlobalLoader();
 
+  const cacheKey = "estructura_" + padreActual;
+  const cache = localStorage.getItem(cacheKey);
+
+  // 🔥 PINTA CACHE INMEDIATO (UX PRO)
+  if (cache) {
+    try {
+      render(JSON.parse(cache));
+    } catch (e) {
+      console.warn("Cache corrupto");
+    }
+  }
+
   fetch(`${API}?action=getEstructura&padre=${padreActual}`)
     .then(r => r.json())
     .then(data => {
+
       render(data);
+
+      // 🔥 GUARDAR CACHE
+      localStorage.setItem(cacheKey, JSON.stringify(data));
+
       hideGlobalLoader();
+
     })
     .catch(err => {
       console.error(err);
@@ -80,8 +106,9 @@ function cargar() {
 }
 
 
-// 🔥 RENDER (TIPO SHAREPOINT)
+// 🔥 RENDER (OPTIMIZADO)
 function render(data) {
+
   const cont = document.getElementById("explorador");
 
   if (!data || data.length === 0) {
@@ -89,31 +116,31 @@ function render(data) {
     return;
   }
 
-  cont.innerHTML = `
-    <div class="grid-cards">
-      ${data.map(row => {
+  let html = `<div class="grid-cards">`;
 
-        const id = row[0];
-        const nombre = row[1];
-        const tipo = row[2];
-        const driveId = row[4];
+  for (let i = 0; i < data.length; i++) {
 
-        const icono = obtenerIcono(nombre, tipo);
+    const row = data[i];
 
-        return `
-          <div class="card-item" onclick="abrir(${id}, '${tipo}', '${driveId}', '${nombre}')">
-            
-            <div class="card-icon">${icono}</div>
+    const id = row[0];
+    const nombre = row[1];
+    const tipo = row[2];
+    const driveId = row[4];
 
-            <div class="card-name">${nombre}</div>
+    const icono = obtenerIcono(nombre, tipo);
 
-            <div class="card-type">${tipo}</div>
+    html += `
+      <div class="card-item" onclick="abrir(${id}, '${tipo}', '${driveId}', '${nombre}')">
+        <div class="card-icon">${icono}</div>
+        <div class="card-name">${nombre}</div>
+        <div class="card-type">${tipo}</div>
+      </div>
+    `;
+  }
 
-          </div>
-        `;
-      }).join("")}
-    </div>
-  `;
+  html += `</div>`;
+
+  cont.innerHTML = html;
 }
 
 
@@ -144,8 +171,9 @@ function abrir(id, tipo, driveId, nombre) {
 }
 
 
-// 🔥 BREADCRUMB DINÁMICO
+// 🔥 BREADCRUMB
 function actualizarRuta() {
+
   const cont = document.getElementById("ruta");
 
   cont.innerHTML = ruta.map((r, i) => {
@@ -154,7 +182,7 @@ function actualizarRuta() {
 }
 
 
-// 🔥 NAVEGAR A NIVEL
+// 🔥 NAVEGAR
 function irA(index) {
 
   const nivel = ruta[index];
@@ -169,17 +197,26 @@ function irA(index) {
 }
 
 
-// 🔥 VOLVER A RAÍZ
+// 🔥 RAÍZ
 function irRaiz() {
   init();
 }
 
 
-// 🔥 CREAR CARPETA (POST FIX)
+// 🔥 LIMPIAR CACHE (CLAVE 🔥)
+function limpiarCache() {
+  Object.keys(localStorage).forEach(k => {
+    if (k.startsWith("estructura_")) {
+      localStorage.removeItem(k);
+    }
+  });
+}
+
+
+// 🔥 CREAR CARPETA
 function nuevaCarpeta() {
 
   const nombre = prompt("Nombre de la carpeta");
-
   if (!nombre) return;
 
   mostrarLoader();
@@ -188,13 +225,11 @@ function nuevaCarpeta() {
     method: "POST",
     body: JSON.stringify({
       action: "crearCarpeta",
-      nombre: nombre,
+      nombre,
       padre: padreActual,
       padre_drive: padreDrive
     }),
-    headers: {
-      "Content-Type": "text/plain;charset=utf-8"
-    }
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
   })
   .then(r => r.json())
   .then(res => {
@@ -203,6 +238,7 @@ function nuevaCarpeta() {
 
     if (res.status) {
       toast("Carpeta creada correctamente");
+      limpiarCache(); // 🔥 CLAVE
       cargar();
     } else {
       toast("Error: " + res.error);
@@ -217,7 +253,7 @@ function nuevaCarpeta() {
 }
 
 
-// 🔥 SUBIR ARCHIVO (FUNCIONAL)
+// 🔥 SUBIR
 function subir() {
 
   const fileInput = document.getElementById("fileInput");
@@ -227,7 +263,12 @@ function subir() {
     return;
   }
 
-  const file = fileInput.files[0];
+  subirArchivoDirecto(fileInput.files[0]);
+}
+
+
+// 🔥 SUBIR DIRECTO (DRAG & DROP + BOTÓN)
+function subirArchivoDirecto(file) {
 
   mostrarLoader();
 
@@ -247,9 +288,7 @@ function subir() {
         padre: padreActual,
         padre_drive: padreDrive
       }),
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      }
+      headers: { "Content-Type": "text/plain;charset=utf-8" }
     })
     .then(r => r.json())
     .then(res => {
@@ -258,6 +297,7 @@ function subir() {
 
       if (res.status) {
         toast("Archivo subido correctamente");
+        limpiarCache(); // 🔥 CLAVE
         cargar();
       } else {
         toast("Error: " + res.error);
@@ -267,7 +307,7 @@ function subir() {
     .catch(err => {
       ocultarLoader();
       console.error(err);
-      toast("Error en la subida");
+      toast("Error en subida");
     });
 
   };
@@ -276,6 +316,7 @@ function subir() {
 }
 
 
+// 🔥 ICONOS
 function obtenerIcono(nombre, tipo) {
 
   if (tipo === "carpeta") return "📁";
@@ -303,11 +344,8 @@ function obtenerIcono(nombre, tipo) {
   }
 }
 
-document.getElementById("fileInput").addEventListener("change", function() {
-  const file = this.files[0];
-  document.getElementById("fileName").innerText = file ? file.name : "Ningún archivo seleccionado";
-});
 
+// 🔥 LOADER LOCAL
 function mostrarLoader() {
   document.getElementById("loader").classList.remove("hidden");
 }
@@ -316,15 +354,24 @@ function ocultarLoader() {
   document.getElementById("loader").classList.add("hidden");
 }
 
+
+// 🔥 LOADER GLOBAL
+function showGlobalLoader() {
+  document.getElementById("globalLoader").classList.remove("hidden");
+}
+
+function hideGlobalLoader() {
+  document.getElementById("globalLoader").classList.add("hidden");
+}
+
+
+// 🔥 TOAST
 function toast(msg) {
   const t = document.getElementById("toast");
   t.innerText = msg;
   t.classList.add("show");
-
   setTimeout(() => t.classList.remove("show"), 3000);
 }
-
-
 
 
 // 🔥 LOGOUT
@@ -332,9 +379,11 @@ function logout() {
   localStorage.removeItem("usuario");
   window.location.href = "index.html";
 }
+
+
+// 🔥 DRAG & DROP
 const dropZone = document.getElementById("dropZone");
 
-// 🔥 BLOQUEAR comportamiento del navegador
 ["dragenter", "dragover", "dragleave", "drop"].forEach(event => {
   document.addEventListener(event, e => {
     e.preventDefault();
@@ -342,22 +391,19 @@ const dropZone = document.getElementById("dropZone");
   }, false);
 });
 
-// 🔥 MOSTRAR OVERLAY
 document.addEventListener("dragenter", () => {
-  dropZone.classList.remove("hidden");
+  if (dropZone) dropZone.classList.remove("hidden");
 });
 
-// 🔥 OCULTAR OVERLAY
 document.addEventListener("dragleave", (e) => {
   if (e.clientX === 0 && e.clientY === 0) {
-    dropZone.classList.add("hidden");
+    if (dropZone) dropZone.classList.add("hidden");
   }
 });
 
-// 🔥 DROP REAL
 document.addEventListener("drop", (e) => {
 
-  dropZone.classList.add("hidden");
+  if (dropZone) dropZone.classList.add("hidden");
 
   const files = e.dataTransfer.files;
 
@@ -366,61 +412,5 @@ document.addEventListener("drop", (e) => {
     return;
   }
 
-  // 🔥 SOLO PRIMER ARCHIVO (luego hacemos multi-upload)
   subirArchivoDirecto(files[0]);
 });
-
-function subirArchivoDirecto(file) {
-
-  mostrarLoader();
-
-  const reader = new FileReader();
-
-  reader.onload = function(e) {
-
-    const base64 = e.target.result.split(",")[1];
-
-    fetch(API, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "subirArchivo",
-        nombre: file.name,
-        tipo: file.type,
-        archivo: base64,
-        padre: padreActual,
-        padre_drive: padreDrive
-      }),
-      headers: {
-        "Content-Type": "text/plain;charset=utf-8"
-      }
-    })
-    .then(r => r.json())
-    .then(res => {
-
-      ocultarLoader();
-
-      if (res.status) {
-        toast("Archivo subido correctamente");
-        cargar();
-      } else {
-        toast("Error: " + res.error);
-      }
-
-    })
-    .catch(err => {
-      ocultarLoader();
-      console.error(err);
-      toast("Error en subida");
-    });
-
-  };
-
-  reader.readAsDataURL(file);
-}
-function showGlobalLoader() {
-  document.getElementById("globalLoader").classList.remove("hidden");
-}
-
-function hideGlobalLoader() {
-  document.getElementById("globalLoader").classList.add("hidden");
-}
