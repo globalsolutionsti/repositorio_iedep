@@ -74,9 +74,26 @@ function nuevaCarpeta() {
 
   if (!nombre) return;
 
-  fetch(`${API}?action=crearCarpeta&nombre=${encodeURIComponent(nombre)}&padre=${padreActual}&padre_drive=${padreDrive}`)
+  const url = `${API}?action=crearCarpeta&nombre=${encodeURIComponent(nombre)}&padre=${padreActual}&padre_drive=${padreDrive}`;
+
+  console.log("URL:", url);
+
+  fetch(url)
   .then(r => r.json())
-  .then(() => cargar());
+  .then(res => {
+    console.log("RESPUESTA:", res);
+
+    if(res.status){
+      alert("Carpeta creada");
+      cargar();
+    } else {
+      alert("Error: " + res.error);
+    }
+  })
+  .catch(err => {
+    console.error("ERROR:", err);
+    alert("Error real en conexión");
+  });
 }
 
 // 🔥 SUBIR ARCHIVO (MEJORADO)
@@ -91,38 +108,42 @@ function subir() {
 
   const file = fileInput.files[0];
 
-  if (file.size > 5 * 1024 * 1024) {
-    alert("Archivo demasiado grande (máx 5MB)");
-    return;
-  }
-
   const reader = new FileReader();
 
   reader.onload = function(e) {
 
     const base64 = e.target.result.split(",")[1];
 
-    fetch(`${API}?action=subirArchivo
+    const url = `${API}?action=subirArchivo
       &nombre=${encodeURIComponent(file.name)}
       &tipo=${file.type}
       &padre=${padreActual}
       &padre_drive=${padreDrive}
-      &archivo=${encodeURIComponent(base64)}`)
+      &archivo=${encodeURIComponent(base64)}`;
+
+    console.log("SUBIDA URL:", url);
+
+    fetch(url)
     .then(r => r.json())
     .then(res => {
-      if (res.status) {
+      console.log("RESPUESTA:", res);
+
+      if(res.status){
         alert("Archivo subido");
         cargar();
       } else {
         alert("Error: " + res.error);
       }
+    })
+    .catch(err => {
+      console.error("ERROR:", err);
+      alert("Error real en subida");
     });
 
   };
 
   reader.readAsDataURL(file);
 }
-
 // 🔥 LOGOUT
 function logout() {
   localStorage.clear();
