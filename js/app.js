@@ -10,14 +10,7 @@ function login() {
     return;
   }
 
-  fetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "login",
-      usuario: usuario,
-      pin: pin
-    })
-  })
+  fetch(`${API}?action=login&usuario=${usuario}&pin=${pin}`)
   .then(r => r.json())
   .then(d => {
     if (d.status) {
