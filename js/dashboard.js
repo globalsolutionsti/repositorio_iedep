@@ -9,9 +9,7 @@ let user = null;
 document.addEventListener("DOMContentLoaded", () => {
   try {
     const data = localStorage.getItem("usuario");
-    if (data && data !== "undefined") {
-      user = JSON.parse(data);
-    }
+    if (data && data !== "undefined") user = JSON.parse(data);
   } catch (e) {
     console.warn("Error parsing user:", e);
   }
@@ -31,11 +29,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  init(); // Aquí NO se muestra el spinner global
+  init();
 });
 
 // 🔥 ROOT
 function init() {
+  // NO mostrar spinner global al cargar la raíz
   fetch(`${API}?action=getRoot`)
     .then(r => r.json())
     .then(root => {
@@ -49,7 +48,7 @@ function init() {
       }];
 
       actualizarRuta();
-      cargar(); // cargar() sí maneja su loader
+      cargar(false); // ⚡ Importante: false = no mostrar spinner global
     })
     .catch(err => {
       console.error(err);
@@ -58,8 +57,8 @@ function init() {
 }
 
 // 🔥 CARGAR (CACHE + LOADER ROBUSTO)
-function cargar() {
-  showGlobalLoader(); // Solo aquí se muestra
+function cargar(mostrarLoaderGlobal = true) {
+  if (mostrarLoaderGlobal) showGlobalLoader(); // solo mostrar si se indica
 
   const cacheKey = "estructura_" + padreActual;
   const cache = localStorage.getItem(cacheKey);
@@ -82,7 +81,9 @@ function cargar() {
       console.error(err);
       toast("Error cargando estructura");
     })
-    .finally(() => hideGlobalLoader());
+    .finally(() => {
+      if (mostrarLoaderGlobal) hideGlobalLoader();
+    });
 }
 
 // 🔥 RENDER
@@ -94,7 +95,6 @@ function render(data) {
   }
 
   let html = `<div class="grid-cards">`;
-
   for (let i = 0; i < data.length; i++) {
     const row = data[i];
     const id = row[0];
@@ -111,7 +111,6 @@ function render(data) {
       </div>
     `;
   }
-
   html += `</div>`;
   cont.innerHTML = html;
 }
@@ -124,11 +123,9 @@ function abrir(id, tipo, driveId, nombre) {
 
     padreActual = id;
     padreDrive = driveId;
-
     ruta.push({ id, nombre, drive: driveId });
-
     actualizarRuta();
-    cargar();
+    cargar(true); // mostrar spinner al navegar entre carpetas
   } else {
     window.open(`https://drive.google.com/file/d/${driveId}`);
   }
@@ -147,7 +144,7 @@ function irA(index) {
   padreDrive = nivel.drive;
   ruta = ruta.slice(0, index + 1);
   actualizarRuta();
-  cargar();
+  cargar(true); // mostrar spinner al navegar
 }
 
 // 🔥 RAÍZ
@@ -168,7 +165,6 @@ function nuevaCarpeta() {
   if (!nombre) return;
 
   mostrarLoader();
-
   fetch(API, {
     method: "POST",
     body: JSON.stringify({ action: "crearCarpeta", nombre, padre: padreActual, padre_drive: padreDrive }),
@@ -179,7 +175,7 @@ function nuevaCarpeta() {
     if (res.status) {
       toast("Carpeta creada correctamente");
       limpiarCache();
-      cargar();
+      cargar(true); // mostrar spinner al actualizar
     } else {
       toast("Error: " + res.error);
     }
@@ -204,11 +200,9 @@ function subir() {
 // 🔥 SUBIR DIRECTO
 function subirArchivoDirecto(file) {
   mostrarLoader();
-
   const reader = new FileReader();
   reader.onload = function(e) {
     const base64 = e.target.result.split(",")[1];
-
     fetch(API, {
       method: "POST",
       body: JSON.stringify({ action: "subirArchivo", nombre: file.name, tipo: file.type, archivo: base64, padre: padreActual, padre_drive: padreDrive }),
@@ -219,7 +213,7 @@ function subirArchivoDirecto(file) {
       if (res.status) {
         toast("Archivo subido correctamente");
         limpiarCache();
-        cargar();
+        cargar(true);
       } else {
         toast("Error: " + res.error);
       }
@@ -230,7 +224,6 @@ function subirArchivoDirecto(file) {
     })
     .finally(() => ocultarLoader());
   };
-
   reader.readAsDataURL(file);
 }
 
@@ -255,7 +248,7 @@ function obtenerIcono(nombre, tipo) {
 function mostrarLoader() { document.getElementById("loader").classList.remove("hidden"); }
 function ocultarLoader() { document.getElementById("loader").classList.add("hidden"); }
 
-// 🔥 LOADER GLOBAL ROBUSTO
+// 🔥 LOADER GLOBAL
 let loaderCount = 0;
 let loaderTimeout;
 function showGlobalLoader() {
