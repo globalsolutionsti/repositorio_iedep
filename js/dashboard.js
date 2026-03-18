@@ -1,3 +1,9 @@
+const user = JSON.parse(localStorage.getItem("user"));
+
+if (!user) {
+  window.location.href = "index.html";
+}
+
 const API = "https://script.google.com/macros/s/AKfycbwbY1bdXy9IJqBn9_pwF_5JNnHF3LDLbVR0Y1-Y1JYDtwiqkaWjt2V3tqfHGI76ZF-6/exec";
 
 let padreActual = 0;
