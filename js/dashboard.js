@@ -1,48 +1,72 @@
 const API = "https://script.google.com/macros/s/AKfycbzN8BoLMmbWVJACVtvlQVnoX29PKCV3xN0U-X6GCuve8OUWONh5Mjq11wXr5kM2g3Uo/exec";
-const user = JSON.parse(localStorage.getItem("usuario"));
 
 let padreActual = 0;
 let padreDrive = "";
-let ruta = []; // 🔥 historial navegación
+let ruta = [];
 
-if (!user) {
-  window.location.href = "index.html";
-}
-
+// 🔥 INICIALIZACIÓN SEGURA
 document.addEventListener("DOMContentLoaded", () => {
+
+  const user = JSON.parse(localStorage.getItem("usuario"));
+
+  console.log("USER:", user);
+
+  if (!user) {
+    window.location.href = "index.html";
+    return;
+  }
+
   document.getElementById("nombreUsuario").innerText = user.nombre;
+
+  init();
 });
 
-// 🔥 OBTENER ROOT
+
+// 🔥 OBTENER RAÍZ
 function init() {
   fetch(`${API}?action=getRoot`)
-  .then(r => r.json())
-  .then(root => {
+    .then(r => r.json())
+    .then(root => {
 
-    padreActual = root.id;
-    padreDrive = root.drive;
+      padreActual = root.id;
+      padreDrive = root.drive;
 
-    ruta = [{
-      id: root.id,
-      nombre: root.nombre,
-      drive: root.drive
-    }];
+      ruta = [{
+        id: root.id,
+        nombre: root.nombre,
+        drive: root.drive
+      }];
 
-    actualizarRuta();
-    cargar();
-  });
+      actualizarRuta();
+      cargar();
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Error cargando raíz");
+    });
 }
+
 
 // 🔥 CARGAR ESTRUCTURA
 function cargar() {
   fetch(`${API}?action=getEstructura&padre=${padreActual}`)
-  .then(r => r.json())
-  .then(render);
+    .then(r => r.json())
+    .then(data => render(data))
+    .catch(err => {
+      console.error(err);
+      alert("Error cargando estructura");
+    });
 }
 
-// 🔥 RENDER
+
+// 🔥 RENDER SHAREPOINT STYLE
 function render(data) {
   const cont = document.getElementById("explorador");
+
+  if (!data || data.length === 0) {
+    cont.innerHTML = "<p>Sin elementos</p>";
+    return;
+  }
 
   cont.innerHTML = `
     <table>
@@ -56,18 +80,19 @@ function render(data) {
       <tbody>
         ${data.map(row => {
 
-          const tipo = row[2];
+          const id = row[0];
           const nombre = row[1];
+          const tipo = row[2];
           const driveId = row[4];
 
           return `
             <tr>
-              <td onclick="abrir(${row[0]}, '${tipo}', '${driveId}', '${nombre}')">
+              <td onclick="abrir(${id}, '${tipo}', '${driveId}', '${nombre}')">
                 ${tipo === "carpeta" ? "📁" : "📄"} ${nombre}
               </td>
               <td>${tipo}</td>
               <td>
-                ${tipo === "archivo" 
+                ${tipo === "archivo"
                   ? `<a href="https://drive.google.com/file/d/${driveId}" target="_blank">Abrir</a>`
                   : ''}
               </td>
@@ -79,14 +104,15 @@ function render(data) {
   `;
 }
 
-// 🔥 ABRIR
+
+// 🔥 ABRIR CARPETA / ARCHIVO
 function abrir(id, tipo, driveId, nombre) {
 
   if (tipo === "carpeta") {
 
-    // 🔥 EVITAR DUPLICADOS
     const ultimo = ruta[ruta.length - 1];
 
+    // 🔥 evitar duplicados
     if (ultimo && ultimo.id === id) return;
 
     padreActual = id;
@@ -106,40 +132,76 @@ function abrir(id, tipo, driveId, nombre) {
   }
 }
 
+
+// 🔥 BREADCRUMB
+function actualizarRuta() {
+  const cont = document.getElementById("ruta");
+
+  cont.innerHTML = ruta.map((r, i) => {
+    return `<span style="cursor:pointer" onclick="irA(${i})">${r.nombre}</span>`;
+  }).join(" / ");
+}
+
+
+// 🔥 IR A NIVEL
+function irA(index) {
+
+  const nivel = ruta[index];
+
+  padreActual = nivel.id;
+  padreDrive = nivel.drive;
+
+  ruta = ruta.slice(0, index + 1);
+
+  actualizarRuta();
+  cargar();
+}
+
+
 // 🔥 VOLVER A RAÍZ
 function irRaiz() {
   init();
 }
 
-// 🔥 CREAR CARPETA
+
+// 🔥 CREAR CARPETA (POST FIX CORS)
 function nuevaCarpeta() {
+
   const nombre = prompt("Nombre carpeta");
 
   if (!nombre) return;
 
-  const url = `${API}?action=crearCarpeta&nombre=${encodeURIComponent(nombre)}&padre=${padreActual}&padre_drive=${padreDrive}`;
-
-  console.log("URL:", url);
-
-  fetch(url)
+  fetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "crearCarpeta",
+      nombre: nombre,
+      padre: padreActual,
+      padre_drive: padreDrive
+    }),
+    headers: {
+      "Content-Type": "text/plain;charset=utf-8"
+    }
+  })
   .then(r => r.json())
   .then(res => {
-    console.log("RESPUESTA:", res);
 
-    if(res.status){
+    if (res.status) {
       alert("Carpeta creada");
       cargar();
     } else {
       alert("Error: " + res.error);
     }
+
   })
   .catch(err => {
-    console.error("ERROR:", err);
+    console.error(err);
     alert("Error real en conexión");
   });
 }
 
-// 🔥 SUBIR ARCHIVO (MEJORADO)
+
+// 🔥 SUBIR ARCHIVO
 function subir() {
 
   const fileInput = document.getElementById("fileInput");
@@ -158,23 +220,23 @@ function subir() {
     const base64 = e.target.result.split(",")[1];
 
     fetch(API, {
-  method: "POST",
-  body: JSON.stringify({
-    action: "subirArchivo",
-    nombre: file.name,
-    tipo: file.type,
-    archivo: base64,
-    padre: padreActual,
-    padre_drive: padreDrive
-  }),
-  headers: {
-    "Content-Type": "text/plain;charset=utf-8"
-  }
-})
+      method: "POST",
+      body: JSON.stringify({
+        action: "subirArchivo",
+        nombre: file.name,
+        tipo: file.type,
+        archivo: base64,
+        padre: padreActual,
+        padre_drive: padreDrive
+      }),
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      }
+    })
     .then(r => r.json())
     .then(res => {
 
-      if(res.status){
+      if (res.status) {
         alert("Archivo subido correctamente");
         cargar();
       } else {
@@ -193,31 +255,8 @@ function subir() {
 }
 
 
-function actualizarRuta() {
-  const cont = document.getElementById("ruta");
-
-  cont.innerHTML = ruta.map((r, i) => {
-    return `<span onclick="irA(${i})">${r.nombre}</span>`;
-  }).join(" / ");
-}
-
-function irA(index) {
-  const nivel = ruta[index];
-
-  padreActual = nivel.id;
-  padreDrive = nivel.drive;
-
-  ruta = ruta.slice(0, index + 1);
-
-  actualizarRuta();
-  cargar();
-}
-
 // 🔥 LOGOUT
 function logout() {
-  localStorage.clear();
+  localStorage.removeItem("usuario");
   window.location.href = "index.html";
 }
-
-// 🔥 INICIO
-window.onload = init;
