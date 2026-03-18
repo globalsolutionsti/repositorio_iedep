@@ -366,12 +366,24 @@ function ocultarLoader() {
 
 
 // 🔥 LOADER GLOBAL
+let loaderTimeout;
+
 function showGlobalLoader() {
-  document.getElementById("globalLoader").classList.remove("hidden");
+  const el = document.getElementById("globalLoader");
+  el.classList.remove("hidden");
+
+  // 🔥 AUTO-KILL en 10 segundos
+  loaderTimeout = setTimeout(() => {
+    console.warn("Loader forzado a cerrar");
+    hideGlobalLoader();
+  }, 10000);
 }
 
 function hideGlobalLoader() {
-  document.getElementById("globalLoader").classList.add("hidden");
+  const el = document.getElementById("globalLoader");
+  el.classList.add("hidden");
+
+  clearTimeout(loaderTimeout);
 }
 
 
