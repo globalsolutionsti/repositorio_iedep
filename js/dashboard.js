@@ -6,16 +6,14 @@ let ruta = [];
 let user = null;
 
 
-// 🔥 INICIALIZACIÓN SEGURA
+// 🔥 INIT
 document.addEventListener("DOMContentLoaded", () => {
 
   try {
     const data = localStorage.getItem("usuario");
-
     if (data && data !== "undefined") {
       user = JSON.parse(data);
     }
-
   } catch (e) {
     console.warn("Error parsing user:", e);
   }
@@ -27,7 +25,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("nombreUsuario").innerText = user.nombre;
 
-  // 🔥 EVENTO FILE INPUT
   const fileInput = document.getElementById("fileInput");
   if (fileInput) {
     fileInput.addEventListener("change", function() {
@@ -40,7 +37,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-// 🔥 OBTENER RAÍZ
+// 🔥 ROOT
 function init() {
 
   showGlobalLoader();
@@ -60,6 +57,9 @@ function init() {
 
       actualizarRuta();
       cargar();
+
+      hideGlobalLoader();
+
     })
     .catch(err => {
       console.error(err);
@@ -69,7 +69,7 @@ function init() {
 }
 
 
-// 🔥 CARGAR ESTRUCTURA (CON CACHE 🚀)
+// 🔥 CARGAR (CACHE + FIX LOADER)
 function cargar() {
 
   showGlobalLoader();
@@ -79,15 +79,11 @@ function cargar() {
 
   let usoCache = false;
 
-  // 🔥 SI HAY CACHE → render inmediato
   if (cache) {
     try {
       render(JSON.parse(cache));
       usoCache = true;
-
-      // 🔥 IMPORTANTE: ocultar loader si ya mostramos datos
-      hideGlobalLoader();
-
+      hideGlobalLoader(); // 🔥 evita spinner infinito
     } catch (e) {
       console.warn("Cache corrupto");
     }
@@ -98,16 +94,14 @@ function cargar() {
     .then(data => {
 
       render(data);
-
       localStorage.setItem(cacheKey, JSON.stringify(data));
 
-      hideGlobalLoader();
+      setTimeout(() => hideGlobalLoader(), 300);
 
     })
     .catch(err => {
       console.error(err);
 
-      // 🔥 SOLO mostrar error si NO hubo cache
       if (!usoCache) {
         toast("Error cargando estructura");
         hideGlobalLoader();
@@ -116,7 +110,7 @@ function cargar() {
 }
 
 
-// 🔥 RENDER (OPTIMIZADO)
+// 🔥 RENDER
 function render(data) {
 
   const cont = document.getElementById("explorador");
@@ -154,23 +148,18 @@ function render(data) {
 }
 
 
-// 🔥 ABRIR CARPETA / ARCHIVO
+// 🔥 ABRIR
 function abrir(id, tipo, driveId, nombre) {
 
   if (tipo === "carpeta") {
 
     const ultimo = ruta[ruta.length - 1];
-
     if (ultimo && ultimo.id === id) return;
 
     padreActual = id;
     padreDrive = driveId;
 
-    ruta.push({
-      id: id,
-      nombre: nombre,
-      drive: driveId
-    });
+    ruta.push({ id, nombre, drive: driveId });
 
     actualizarRuta();
     cargar();
@@ -181,9 +170,8 @@ function abrir(id, tipo, driveId, nombre) {
 }
 
 
-// 🔥 BREADCRUMB
+// 🔥 RUTA
 function actualizarRuta() {
-
   const cont = document.getElementById("ruta");
 
   cont.innerHTML = ruta.map((r, i) => {
@@ -213,7 +201,7 @@ function irRaiz() {
 }
 
 
-// 🔥 LIMPIAR CACHE (CLAVE 🔥)
+// 🔥 CACHE
 function limpiarCache() {
   Object.keys(localStorage).forEach(k => {
     if (k.startsWith("estructura_")) {
@@ -223,7 +211,7 @@ function limpiarCache() {
 }
 
 
-// 🔥 CREAR CARPETA
+// 🔥 NUEVA CARPETA
 function nuevaCarpeta() {
 
   const nombre = prompt("Nombre de la carpeta");
@@ -248,7 +236,7 @@ function nuevaCarpeta() {
 
     if (res.status) {
       toast("Carpeta creada correctamente");
-      limpiarCache(); // 🔥 CLAVE
+      limpiarCache();
       cargar();
     } else {
       toast("Error: " + res.error);
@@ -277,7 +265,7 @@ function subir() {
 }
 
 
-// 🔥 SUBIR DIRECTO (DRAG & DROP + BOTÓN)
+// 🔥 SUBIR DIRECTO
 function subirArchivoDirecto(file) {
 
   mostrarLoader();
@@ -307,7 +295,7 @@ function subirArchivoDirecto(file) {
 
       if (res.status) {
         toast("Archivo subido correctamente");
-        limpiarCache(); // 🔥 CLAVE
+        limpiarCache();
         cargar();
       } else {
         toast("Error: " + res.error);
@@ -365,25 +353,43 @@ function ocultarLoader() {
 }
 
 
-// 🔥 LOADER GLOBAL
+// 🔥 LOADER GLOBAL INTELIGENTE
+let loaderCount = 0;
 let loaderTimeout;
 
 function showGlobalLoader() {
-  const el = document.getElementById("globalLoader");
-  el.classList.remove("hidden");
 
-  // 🔥 AUTO-KILL en 10 segundos
-  loaderTimeout = setTimeout(() => {
-    console.warn("Loader forzado a cerrar");
-    hideGlobalLoader();
-  }, 10000);
+  loaderCount++;
+
+  const el = document.getElementById("globalLoader");
+
+  if (loaderCount === 1) {
+    el.classList.remove("hidden");
+
+    loaderTimeout = setTimeout(() => {
+      console.warn("Loader forzado a cerrar");
+      loaderCount = 0;
+      hideGlobalLoader(true);
+    }, 10000);
+  }
 }
 
-function hideGlobalLoader() {
-  const el = document.getElementById("globalLoader");
-  el.classList.add("hidden");
+function hideGlobalLoader(force = false) {
 
-  clearTimeout(loaderTimeout);
+  if (force) {
+    loaderCount = 0;
+  } else {
+    loaderCount--;
+  }
+
+  if (loaderCount <= 0) {
+    loaderCount = 0;
+
+    const el = document.getElementById("globalLoader");
+    el.classList.add("hidden");
+
+    clearTimeout(loaderTimeout);
+  }
 }
 
 
