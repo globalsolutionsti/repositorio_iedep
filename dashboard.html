@@ -1,57 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="css/styles.css">
+</head>
 <body>
 
 <div class="layout">
 
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="logo">IEDEP</div>
-
-    <nav>
-      <a class="active">📂 Documentos</a>
-      <a>📊 Reportes</a>
-      <a>⚙️ Configuración</a>
-    </nav>
   </aside>
 
-  <!-- MAIN -->
   <div class="main">
 
-    <!-- HEADER -->
-    <header class="header">
+    <div class="header">
       <h1>Gestor Documental</h1>
-      <div class="user">
-        <span id="nombreUsuario"></span>
-        <button onclick="logout()">Salir</button>
-      </div>
-    </header>
+      <button onclick="logout()">Salir</button>
+    </div>
 
-    <!-- CONTENT -->
-    <section class="content">
+    <div class="content">
+
+      <div class="breadcrumb">
+        <span onclick="irRaiz()">🏠 Inicio</span> /
+        <span id="ruta">Documentos</span>
+      </div>
 
       <div class="toolbar">
-        <button class="btn-primary" onclick="subirArchivo()">+ Subir Documento</button>
-        <input type="text" placeholder="Buscar documento..." onkeyup="buscar(this.value)">
+        <button onclick="nuevaCarpeta()">📁 Nueva Carpeta</button>
+        <input type="file" id="fileInput">
+        <button onclick="subir()">⬆ Subir</button>
       </div>
 
-      <div class="table-container">
-        <table id="tablaDocs">
-          <thead>
-            <tr>
-              <th>Documento</th>
-              <th>Área</th>
-              <th>Versión</th>
-              <th>Fecha</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+      <div id="explorador" class="grid"></div>
 
-    </section>
+    </div>
 
   </div>
+
 </div>
 
 <script src="js/dashboard.js"></script>
 </body>
+</html>
