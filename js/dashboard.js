@@ -1,5 +1,5 @@
 const API = "https://script.google.com/macros/s/AKfycbzN8BoLMmbWVJACVtvlQVnoX29PKCV3xN0U-X6GCuve8OUWONh5Mjq11wXr5kM2g3Uo/exec";
-const user = JSON.parse(localStorage.getItem("user"));
+const user = JSON.parse(localStorage.getItem("usuario"));
 
 let padreActual = 0;
 let padreDrive = "";
