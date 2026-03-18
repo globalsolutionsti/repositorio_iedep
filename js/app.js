@@ -8,16 +8,17 @@ function login() {
     method: 'POST',
     body: JSON.stringify({
       action: 'login',
-      usuario: usuario,
-      pin: pin
+      usuario,
+      pin
     })
   })
   .then(res => res.json())
   .then(data => {
     if(data.status) {
-      alert('Bienvenido ' + data.usuario);
+      localStorage.setItem('usuario', JSON.stringify(data));
+      window.location.href = 'dashboard.html';
     } else {
-      alert('Error de acceso');
+      alert('Credenciales incorrectas');
     }
   });
 }
