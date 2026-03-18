@@ -37,13 +37,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
 // 🔥 ROOT
 function init() {
-
   showGlobalLoader();
 
   fetch(`${API}?action=getRoot`)
     .then(r => r.json())
     .then(root => {
-
       padreActual = root.id;
       padreDrive = root.drive;
 
@@ -55,7 +53,6 @@ function init() {
 
       actualizarRuta();
       cargar();
-
     })
     .catch(err => {
       console.error(err);
@@ -64,14 +61,12 @@ function init() {
     .finally(() => hideGlobalLoader());
 }
 
-// 🔥 CARGAR (CACHE + FIX LOADER)
+// 🔥 CARGAR (CACHE + LOADER ROBUSTO)
 function cargar() {
-
   showGlobalLoader();
 
   const cacheKey = "estructura_" + padreActual;
   const cache = localStorage.getItem(cacheKey);
-
   let usoCache = false;
 
   if (cache) {
@@ -93,12 +88,14 @@ function cargar() {
       console.error(err);
       toast("Error cargando estructura");
     })
-    .finally(() => hideGlobalLoader());
+    .finally(() => {
+      // 🔹 Si no usamos cache o usamos cache corrupto, siempre cerrar loader
+      hideGlobalLoader();
+    });
 }
 
 // 🔥 RENDER
 function render(data) {
-
   const cont = document.getElementById("explorador");
 
   if (!data || data.length === 0) {
@@ -109,9 +106,7 @@ function render(data) {
   let html = `<div class="grid-cards">`;
 
   for (let i = 0; i < data.length; i++) {
-
     const row = data[i];
-
     const id = row[0];
     const nombre = row[1];
     const tipo = row[2];
@@ -129,15 +124,12 @@ function render(data) {
   }
 
   html += `</div>`;
-
   cont.innerHTML = html;
 }
 
 // 🔥 ABRIR
 function abrir(id, tipo, driveId, nombre) {
-
   if (tipo === "carpeta") {
-
     const ultimo = ruta[ruta.length - 1];
     if (ultimo && ultimo.id === id) return;
 
@@ -148,7 +140,6 @@ function abrir(id, tipo, driveId, nombre) {
 
     actualizarRuta();
     cargar();
-
   } else {
     window.open(`https://drive.google.com/file/d/${driveId}`);
   }
@@ -165,7 +156,6 @@ function actualizarRuta() {
 
 // 🔥 NAVEGAR
 function irA(index) {
-
   const nivel = ruta[index];
 
   padreActual = nivel.id;
@@ -193,7 +183,6 @@ function limpiarCache() {
 
 // 🔥 NUEVA CARPETA
 function nuevaCarpeta() {
-
   const nombre = prompt("Nombre de la carpeta");
   if (!nombre) return;
 
@@ -211,9 +200,6 @@ function nuevaCarpeta() {
   })
   .then(r => r.json())
   .then(res => {
-
-    ocultarLoader();
-
     if (res.status) {
       toast("Carpeta creada correctamente");
       limpiarCache();
@@ -221,18 +207,16 @@ function nuevaCarpeta() {
     } else {
       toast("Error: " + res.error);
     }
-
   })
   .catch(err => {
-    ocultarLoader();
     console.error(err);
     toast("Error de conexión");
-  });
+  })
+  .finally(() => ocultarLoader());
 }
 
 // 🔥 SUBIR
 function subir() {
-
   const fileInput = document.getElementById("fileInput");
 
   if (!fileInput.files.length) {
@@ -245,13 +229,11 @@ function subir() {
 
 // 🔥 SUBIR DIRECTO
 function subirArchivoDirecto(file) {
-
   mostrarLoader();
 
   const reader = new FileReader();
 
   reader.onload = function(e) {
-
     const base64 = e.target.result.split(",")[1];
 
     fetch(API, {
@@ -268,9 +250,6 @@ function subirArchivoDirecto(file) {
     })
     .then(r => r.json())
     .then(res => {
-
-      ocultarLoader();
-
       if (res.status) {
         toast("Archivo subido correctamente");
         limpiarCache();
@@ -278,14 +257,12 @@ function subirArchivoDirecto(file) {
       } else {
         toast("Error: " + res.error);
       }
-
     })
     .catch(err => {
-      ocultarLoader();
       console.error(err);
       toast("Error en subida");
-    });
-
+    })
+    .finally(() => ocultarLoader());
   };
 
   reader.readAsDataURL(file);
@@ -293,7 +270,6 @@ function subirArchivoDirecto(file) {
 
 // 🔥 ICONOS
 function obtenerIcono(nombre, tipo) {
-
   if (tipo === "carpeta") return "📁";
 
   const ext = nombre.includes(".")
@@ -328,41 +304,33 @@ function ocultarLoader() {
   document.getElementById("loader").classList.add("hidden");
 }
 
-// 🔥 LOADER GLOBAL INTELIGENTE
+// 🔥 LOADER GLOBAL ROBUSTO
 let loaderCount = 0;
 let loaderTimeout;
 
 function showGlobalLoader() {
-
   loaderCount++;
-
   const el = document.getElementById("globalLoader");
 
   if (loaderCount === 1) {
     el.classList.remove("hidden");
 
     loaderTimeout = setTimeout(() => {
-      console.warn("Loader forzado a cerrar");
+      console.warn("Loader forzado a cerrar tras 10s");
       loaderCount = 0;
-      hideGlobalLoader(true);
+      el.classList.add("hidden");
     }, 10000);
   }
 }
 
 function hideGlobalLoader(force = false) {
-
-  if (force) {
-    loaderCount = 0;
-  } else {
-    loaderCount--;
-  }
+  if (force) loaderCount = 0;
+  else loaderCount--;
 
   if (loaderCount <= 0) {
     loaderCount = 0;
-
     const el = document.getElementById("globalLoader");
     el.classList.add("hidden");
-
     clearTimeout(loaderTimeout);
   }
 }
@@ -402,11 +370,9 @@ document.addEventListener("dragleave", (e) => {
 });
 
 document.addEventListener("drop", (e) => {
-
   if (dropZone) dropZone.classList.add("hidden");
 
   const files = e.dataTransfer.files;
-
   if (!files || files.length === 0) {
     toast("No se detectó archivo");
     return;
