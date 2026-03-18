@@ -168,9 +168,11 @@ function irRaiz() {
 // 🔥 CREAR CARPETA (POST FIX)
 function nuevaCarpeta() {
 
-  const nombre = prompt("Nombre carpeta");
+  const nombre = prompt("Nombre de la carpeta");
 
   if (!nombre) return;
+
+  mostrarLoader();
 
   fetch(API, {
     method: "POST",
@@ -187,17 +189,20 @@ function nuevaCarpeta() {
   .then(r => r.json())
   .then(res => {
 
+    ocultarLoader();
+
     if (res.status) {
-      alert("Carpeta creada");
+      toast("Carpeta creada correctamente");
       cargar();
     } else {
-      alert("Error: " + res.error);
+      toast("Error: " + res.error);
     }
 
   })
   .catch(err => {
+    ocultarLoader();
     console.error(err);
-    alert("Error real en conexión");
+    toast("Error de conexión");
   });
 }
 
@@ -208,11 +213,13 @@ function subir() {
   const fileInput = document.getElementById("fileInput");
 
   if (!fileInput.files.length) {
-    alert("Selecciona un archivo");
+    toast("Selecciona un archivo");
     return;
   }
 
   const file = fileInput.files[0];
+
+  mostrarLoader();
 
   const reader = new FileReader();
 
@@ -237,23 +244,28 @@ function subir() {
     .then(r => r.json())
     .then(res => {
 
+      ocultarLoader();
+
       if (res.status) {
-        alert("Archivo subido correctamente");
+        toast("Archivo subido correctamente");
         cargar();
       } else {
-        alert("Error: " + res.error);
+        toast("Error: " + res.error);
       }
 
     })
     .catch(err => {
+      ocultarLoader();
       console.error(err);
-      alert("Error real en subida");
+      toast("Error en la subida");
     });
 
   };
 
   reader.readAsDataURL(file);
 }
+
+
 function obtenerIcono(nombre, tipo) {
 
   if (tipo === "carpeta") return "📁";
@@ -280,6 +292,30 @@ function obtenerIcono(nombre, tipo) {
     default: return "📄";
   }
 }
+
+document.getElementById("fileInput").addEventListener("change", function() {
+  const file = this.files[0];
+  document.getElementById("fileName").innerText = file ? file.name : "Ningún archivo seleccionado";
+});
+
+function mostrarLoader() {
+  document.getElementById("loader").classList.remove("hidden");
+}
+
+function ocultarLoader() {
+  document.getElementById("loader").classList.add("hidden");
+}
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.innerText = msg;
+  t.classList.add("show");
+
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+
+
 
 // 🔥 LOGOUT
 function logout() {
