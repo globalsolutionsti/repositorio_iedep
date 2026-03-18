@@ -77,10 +77,17 @@ function cargar() {
   const cacheKey = "estructura_" + padreActual;
   const cache = localStorage.getItem(cacheKey);
 
-  // 🔥 PINTA CACHE INMEDIATO (UX PRO)
+  let usoCache = false;
+
+  // 🔥 SI HAY CACHE → render inmediato
   if (cache) {
     try {
       render(JSON.parse(cache));
+      usoCache = true;
+
+      // 🔥 IMPORTANTE: ocultar loader si ya mostramos datos
+      hideGlobalLoader();
+
     } catch (e) {
       console.warn("Cache corrupto");
     }
@@ -92,7 +99,6 @@ function cargar() {
 
       render(data);
 
-      // 🔥 GUARDAR CACHE
       localStorage.setItem(cacheKey, JSON.stringify(data));
 
       hideGlobalLoader();
@@ -100,8 +106,12 @@ function cargar() {
     })
     .catch(err => {
       console.error(err);
-      toast("Error cargando estructura");
-      hideGlobalLoader();
+
+      // 🔥 SOLO mostrar error si NO hubo cache
+      if (!usoCache) {
+        toast("Error cargando estructura");
+        hideGlobalLoader();
+      }
     });
 }
 
