@@ -9,12 +9,8 @@ let user = null;
 document.addEventListener("DOMContentLoaded", () => {
   try {
     const data = localStorage.getItem("usuario");
-    if (data && data !== "undefined") {
-      user = JSON.parse(data);
-    }
-  } catch (e) {
-    console.warn("Error parsing user:", e);
-  }
+    if (data && data !== "undefined") user = JSON.parse(data);
+  } catch (e) { console.warn("Error parsing user:", e); }
 
   if (!user) {
     window.location.href = "index.html";
@@ -31,11 +27,12 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  init(); // ⚡ No mostrar spinner global al iniciar
+  init(); // 🔹 Mostramos loader global al inicio
 });
 
 // 🔥 ROOT
 function init() {
+  showGlobalLoader(); // 🔹 MOSTRAR spinner global desde el inicio
   fetch(`${API}?action=getRoot`)
     .then(r => r.json())
     .then(root => {
@@ -43,15 +40,16 @@ function init() {
       padreDrive = root.drive;
       ruta = [{ id: root.id, nombre: root.nombre, drive: root.drive }];
       actualizarRuta();
-      cargar(false); // ⚡ false = no mostrar spinner global al iniciar
+      cargar(true); // 🔹 Ahora mostramos loader global al cargar estructura
     })
     .catch(err => {
       console.error(err);
       toast("Error cargando raíz");
-    });
+    })
+    .finally(() => hideGlobalLoader(true)); // 🔹 Forzamos ocultar siempre
 }
 
-// 🔥 CARGAR (CACHE + LOADER)
+// 🔥 CARGAR
 function cargar(mostrarLoaderGlobal = true) {
   if (mostrarLoaderGlobal) showGlobalLoader();
 
@@ -59,11 +57,7 @@ function cargar(mostrarLoaderGlobal = true) {
   const cache = localStorage.getItem(cacheKey);
 
   if (cache) {
-    try {
-      render(JSON.parse(cache));
-    } catch (e) {
-      console.warn("Cache corrupto");
-    }
+    try { render(JSON.parse(cache)); } catch (e) { console.warn("Cache corrupto"); }
   }
 
   fetch(`${API}?action=getEstructura&padre=${padreActual}`)
@@ -76,18 +70,13 @@ function cargar(mostrarLoaderGlobal = true) {
       console.error(err);
       toast("Error cargando estructura");
     })
-    .finally(() => {
-      if (mostrarLoaderGlobal) hideGlobalLoader(true); // ⚡ forzar ocultar loader global
-    });
+    .finally(() => hideGlobalLoader(true)); // 🔹 Forzar ocultar loader global
 }
 
 // 🔥 RENDER
 function render(data) {
   const cont = document.getElementById("explorador");
-  if (!data || data.length === 0) {
-    cont.innerHTML = "<p>Sin elementos</p>";
-    return;
-  }
+  if (!data || data.length === 0) { cont.innerHTML = "<p>Sin elementos</p>"; return; }
 
   let html = `<div class="grid-cards">`;
 
@@ -117,122 +106,86 @@ function abrir(id, tipo, driveId, nombre) {
   if (tipo === "carpeta") {
     const ultimo = ruta[ruta.length - 1];
     if (ultimo && ultimo.id === id) return;
-
-    padreActual = id;
-    padreDrive = driveId;
+    padreActual = id; padreDrive = driveId;
     ruta.push({ id, nombre, drive: driveId });
     actualizarRuta();
-    cargar(true); // ⚡ mostrar loader global al abrir carpeta
-  } else {
-    window.open(`https://drive.google.com/file/d/${driveId}`);
-  }
+    cargar(true);
+  } else { window.open(`https://drive.google.com/file/d/${driveId}`); }
 }
 
 // 🔥 RUTA
 function actualizarRuta() {
-  const cont = document.getElementById("ruta");
-  cont.innerHTML = ruta.map((r, i) => `<span style="cursor:pointer" onclick="irA(${i})">${r.nombre}</span>`).join(" / ");
+  document.getElementById("ruta").innerHTML =
+    ruta.map((r, i) => `<span style="cursor:pointer" onclick="irA(${i})">${r.nombre}</span>`).join(" / ");
 }
 
 // 🔥 NAVEGAR
 function irA(index) {
   const nivel = ruta[index];
-  padreActual = nivel.id;
-  padreDrive = nivel.drive;
+  padreActual = nivel.id; padreDrive = nivel.drive;
   ruta = ruta.slice(0, index + 1);
   actualizarRuta();
-  cargar(true); // ⚡ mostrar loader global
+  cargar(true);
 }
 
 // 🔥 RAÍZ
-function irRaiz() {
-  init();
-}
+function irRaiz() { init(); }
 
 // 🔥 CACHE
-function limpiarCache() {
-  Object.keys(localStorage).forEach(k => {
-    if (k.startsWith("estructura_")) localStorage.removeItem(k);
-  });
-}
+function limpiarCache() { Object.keys(localStorage).forEach(k => { if (k.startsWith("estructura_")) localStorage.removeItem(k); }); }
 
 // 🔥 NUEVA CARPETA
 function nuevaCarpeta() {
-  const nombre = prompt("Nombre de la carpeta");
-  if (!nombre) return;
-
+  const nombre = prompt("Nombre de la carpeta"); if (!nombre) return;
   mostrarLoader();
-
   fetch(API, {
     method: "POST",
     body: JSON.stringify({ action: "crearCarpeta", nombre, padre: padreActual, padre_drive: padreDrive }),
     headers: { "Content-Type": "text/plain;charset=utf-8" }
   })
-    .then(r => r.json())
-    .then(res => {
-      if (res.status) {
-        toast("Carpeta creada correctamente");
-        limpiarCache();
-        cargar(true); // ⚡ loader global
-      } else {
-        toast("Error: " + res.error);
-      }
-    })
-    .catch(err => {
-      console.error(err);
-      toast("Error de conexión");
-    })
-    .finally(() => ocultarLoader());
+  .then(r => r.json())
+  .then(res => {
+    if (res.status) { toast("Carpeta creada correctamente"); limpiarCache(); cargar(true); }
+    else toast("Error: " + res.error);
+  })
+  .catch(err => { console.error(err); toast("Error de conexión"); })
+  .finally(() => ocultarLoader());
 }
 
 // 🔥 SUBIR
 function subir() {
   const fileInput = document.getElementById("fileInput");
-  if (!fileInput.files.length) {
-    toast("Selecciona un archivo");
-    return;
-  }
+  if (!fileInput.files.length) { toast("Selecciona un archivo"); return; }
   subirArchivoDirecto(fileInput.files[0]);
 }
 
 // 🔥 SUBIR DIRECTO
 function subirArchivoDirecto(file) {
   mostrarLoader();
-
   const reader = new FileReader();
-  reader.onload = function (e) {
+  reader.onload = function(e) {
     const base64 = e.target.result.split(",")[1];
-
     fetch(API, {
       method: "POST",
-      body: JSON.stringify({ action: "subirArchivo", nombre: file.name, tipo: file.type, archivo: base64, padre: padreActual, padre_drive: padreDrive }),
-      headers: { "Content-Type": "text/plain;charset=utf-8" }
+      body: JSON.stringify({ action:"subirArchivo", nombre:file.name, tipo:file.type, archivo:base64, padre:padreActual, padre_drive:padreDrive }),
+      headers: {"Content-Type":"text/plain;charset=utf-8"}
     })
-      .then(r => r.json())
-      .then(res => {
-        if (res.status) {
-          toast("Archivo subido correctamente");
-          limpiarCache();
-          cargar(true); // ⚡ loader global
-        } else {
-          toast("Error: " + res.error);
-        }
-      })
-      .catch(err => {
-        console.error(err);
-        toast("Error en subida");
-      })
-      .finally(() => ocultarLoader());
+    .then(r=>r.json())
+    .then(res=>{
+      if(res.status){ toast("Archivo subido correctamente"); limpiarCache(); cargar(true); }
+      else toast("Error: "+res.error);
+    })
+    .catch(err=>{ console.error(err); toast("Error en subida"); })
+    .finally(()=>ocultarLoader());
   };
-
   reader.readAsDataURL(file);
 }
 
 // 🔥 ICONOS
 function obtenerIcono(nombre, tipo) {
-  if (tipo === "carpeta") return "📁";
+  if(tipo==="carpeta") return "📁";
   const ext = nombre.includes(".") ? nombre.split(".").pop().toLowerCase() : "";
-  switch (ext) {
+  switch(ext){
     case "pdf": return "📕";
     case "doc": case "docx": return "📘";
     case "xls": case "xlsx": return "📗";
@@ -249,69 +202,41 @@ function obtenerIcono(nombre, tipo) {
 function mostrarLoader() { document.getElementById("loader").classList.remove("hidden"); }
 function ocultarLoader() { document.getElementById("loader").classList.add("hidden"); }
 
-// 🔥 LOADER GLOBAL CORREGIDO
-let loaderCount = 0;
-let loaderTimeout;
-
-function showGlobalLoader() {
+// 🔥 LOADER GLOBAL
+let loaderCount=0, loaderTimeout;
+function showGlobalLoader(){
   loaderCount++;
-  const el = document.getElementById("globalLoader");
-
-  if (loaderCount === 1) {
+  const el=document.getElementById("globalLoader");
+  if(loaderCount===1){
     el.classList.remove("hidden");
-
-    // 🔹 Timeout de seguridad por si fetch se queda colgado
-    loaderTimeout = setTimeout(() => {
-      console.warn("Loader forzado a cerrar tras 10s");
-      loaderCount = 0;
-      el.classList.add("hidden");
-    }, 10000);
+    loaderTimeout = setTimeout(()=>{
+      console.warn("Loader forzado cerrado tras 10s");
+      loaderCount=0; el.classList.add("hidden");
+    },10000);
   }
 }
-
-function hideGlobalLoader(force = false) {
-  const el = document.getElementById("globalLoader");
-
-  if (force) {
-    loaderCount = 0;
-    el.classList.add("hidden");
-    clearTimeout(loaderTimeout);
-    return;
-  }
-
-  loaderCount--;
-  if (loaderCount <= 0) {
-    loaderCount = 0;
-    el.classList.add("hidden");
-    clearTimeout(loaderTimeout);
-  }
+function hideGlobalLoader(force=false){
+  const el=document.getElementById("globalLoader");
+  if(force){ loaderCount=0; el.classList.add("hidden"); clearTimeout(loaderTimeout); return; }
+  loaderCount--; if(loaderCount<=0){ loaderCount=0; el.classList.add("hidden"); clearTimeout(loaderTimeout);}
 }
 
 // 🔥 TOAST
-function toast(msg) {
-  const t = document.getElementById("toast");
-  t.innerText = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 3000);
-}
+function toast(msg){ const t=document.getElementById("toast"); t.innerText=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),3000); }
 
 // 🔥 LOGOUT
-function logout() {
-  localStorage.removeItem("usuario");
-  window.location.href = "index.html";
-}
+function logout(){ localStorage.removeItem("usuario"); window.location.href="index.html"; }
 
 // 🔥 DRAG & DROP
 const dropZone = document.getElementById("dropZone");
-["dragenter", "dragover", "dragleave", "drop"].forEach(event => {
-  document.addEventListener(event, e => { e.preventDefault(); e.stopPropagation(); }, false);
+["dragenter","dragover","dragleave","drop"].forEach(event=>{
+  document.addEventListener(event,e=>{ e.preventDefault(); e.stopPropagation(); },false);
 });
-
-document.addEventListener("dragenter", () => { if (dropZone) dropZone.classList.remove("hidden"); });
-document.addEventListener("dragleave", (e) => { if (e.clientX === 0 && e.clientY === 0) { if (dropZone) dropZone.classList.add("hidden"); } });
-document.addEventListener("drop", (e) => {
-  if (dropZone) dropZone.classList.add("hidden");
-  const files = e.dataTransfer.files;
-  if (!files || files.length === 0) { toast("No se detectó archivo"); return; }
+document.addEventListener("dragenter",()=>{ if(dropZone) dropZone.classList.remove("hidden"); });
+document.addEventListener("dragleave",(e)=>{ if(e.clientX===0 && e.clientY===0){ if(dropZone) dropZone.classList.add("hidden"); }});
+document.addEventListener("drop",(e)=>{
+  if(dropZone) dropZone.classList.add("hidden");
+  const files=e.dataTransfer.files;
+  if(!files||files.length===0){ toast("No se detectó archivo"); return; }
   subirArchivoDirecto(files[0]);
 });
