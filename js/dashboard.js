@@ -57,11 +57,18 @@ function nuevaCarpeta() {
 }
 
 function subir() {
-  const file = document.getElementById("fileInput").files[0];
+  const fileInput = document.getElementById("fileInput");
+
+  if (!fileInput.files.length) {
+    alert("Selecciona un archivo");
+    return;
+  }
+
+  const file = fileInput.files[0];
   const reader = new FileReader();
 
-  reader.onload = function() {
-    const base64 = reader.result.split(",")[1];
+  reader.onload = function(e) {
+    const base64 = e.target.result.split(",")[1];
 
     fetch(API, {
       method: "POST",
@@ -73,7 +80,17 @@ function subir() {
         padre: padreActual,
         padre_drive: padreDrive
       })
-    }).then(cargar);
+    })
+    .then(r => r.json())
+    .then(res => {
+      if(res.status){
+        alert("Archivo subido");
+        cargar();
+      } else {
+        console.error(res.error);
+        alert("Error al subir");
+      }
+    });
   };
 
   reader.readAsDataURL(file);
