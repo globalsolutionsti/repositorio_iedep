@@ -5,7 +5,6 @@ let padreDrive = "";
 let ruta = [];
 let user = null;
 
-
 // 🔥 INIT
 document.addEventListener("DOMContentLoaded", () => {
 
@@ -36,7 +35,6 @@ document.addEventListener("DOMContentLoaded", () => {
   init();
 });
 
-
 // 🔥 ROOT
 function init() {
 
@@ -58,16 +56,13 @@ function init() {
       actualizarRuta();
       cargar();
 
-      hideGlobalLoader();
-
     })
     .catch(err => {
       console.error(err);
       toast("Error cargando raíz");
-      hideGlobalLoader();
-    });
+    })
+    .finally(() => hideGlobalLoader());
 }
-
 
 // 🔥 CARGAR (CACHE + FIX LOADER)
 function cargar() {
@@ -83,7 +78,6 @@ function cargar() {
     try {
       render(JSON.parse(cache));
       usoCache = true;
-      hideGlobalLoader(); // 🔥 evita spinner infinito
     } catch (e) {
       console.warn("Cache corrupto");
     }
@@ -92,23 +86,15 @@ function cargar() {
   fetch(`${API}?action=getEstructura&padre=${padreActual}`)
     .then(r => r.json())
     .then(data => {
-
       render(data);
       localStorage.setItem(cacheKey, JSON.stringify(data));
-
-      setTimeout(() => hideGlobalLoader(), 300);
-
     })
     .catch(err => {
       console.error(err);
-
-      if (!usoCache) {
-        toast("Error cargando estructura");
-        hideGlobalLoader();
-      }
-    });
+      toast("Error cargando estructura");
+    })
+    .finally(() => hideGlobalLoader());
 }
-
 
 // 🔥 RENDER
 function render(data) {
@@ -147,7 +133,6 @@ function render(data) {
   cont.innerHTML = html;
 }
 
-
 // 🔥 ABRIR
 function abrir(id, tipo, driveId, nombre) {
 
@@ -169,7 +154,6 @@ function abrir(id, tipo, driveId, nombre) {
   }
 }
 
-
 // 🔥 RUTA
 function actualizarRuta() {
   const cont = document.getElementById("ruta");
@@ -178,7 +162,6 @@ function actualizarRuta() {
     return `<span style="cursor:pointer" onclick="irA(${i})">${r.nombre}</span>`;
   }).join(" / ");
 }
-
 
 // 🔥 NAVEGAR
 function irA(index) {
@@ -194,12 +177,10 @@ function irA(index) {
   cargar();
 }
 
-
 // 🔥 RAÍZ
 function irRaiz() {
   init();
 }
-
 
 // 🔥 CACHE
 function limpiarCache() {
@@ -209,7 +190,6 @@ function limpiarCache() {
     }
   });
 }
-
 
 // 🔥 NUEVA CARPETA
 function nuevaCarpeta() {
@@ -250,7 +230,6 @@ function nuevaCarpeta() {
   });
 }
 
-
 // 🔥 SUBIR
 function subir() {
 
@@ -263,7 +242,6 @@ function subir() {
 
   subirArchivoDirecto(fileInput.files[0]);
 }
-
 
 // 🔥 SUBIR DIRECTO
 function subirArchivoDirecto(file) {
@@ -313,7 +291,6 @@ function subirArchivoDirecto(file) {
   reader.readAsDataURL(file);
 }
 
-
 // 🔥 ICONOS
 function obtenerIcono(nombre, tipo) {
 
@@ -342,7 +319,6 @@ function obtenerIcono(nombre, tipo) {
   }
 }
 
-
 // 🔥 LOADER LOCAL
 function mostrarLoader() {
   document.getElementById("loader").classList.remove("hidden");
@@ -351,7 +327,6 @@ function mostrarLoader() {
 function ocultarLoader() {
   document.getElementById("loader").classList.add("hidden");
 }
-
 
 // 🔥 LOADER GLOBAL INTELIGENTE
 let loaderCount = 0;
@@ -392,7 +367,6 @@ function hideGlobalLoader(force = false) {
   }
 }
 
-
 // 🔥 TOAST
 function toast(msg) {
   const t = document.getElementById("toast");
@@ -401,13 +375,11 @@ function toast(msg) {
   setTimeout(() => t.classList.remove("show"), 3000);
 }
 
-
 // 🔥 LOGOUT
 function logout() {
   localStorage.removeItem("usuario");
   window.location.href = "index.html";
 }
-
 
 // 🔥 DRAG & DROP
 const dropZone = document.getElementById("dropZone");
