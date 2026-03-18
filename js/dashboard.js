@@ -43,27 +43,59 @@ function cargar() {
 // 🔥 RENDER
 function render(data) {
   const cont = document.getElementById("explorador");
-  cont.innerHTML = "";
 
-  data.forEach(row => {
-    const tipo = row[2];
-    const icono = tipo === "carpeta" ? "📁" : "📄";
+  cont.innerHTML = `
+    <table>
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${data.map(row => {
 
-    cont.innerHTML += `
-      <div class="card-item" onclick="abrir(${row[0]}, '${tipo}', '${row[4]}')">
-        <div class="icon">${icono}</div>
-        <div>${row[1]}</div>
-      </div>
-    `;
-  });
+          const tipo = row[2];
+          const nombre = row[1];
+          const driveId = row[4];
+
+          return `
+            <tr>
+              <td onclick="abrir(${row[0]}, '${tipo}', '${driveId}', '${nombre}')">
+                ${tipo === "carpeta" ? "📁" : "📄"} ${nombre}
+              </td>
+              <td>${tipo}</td>
+              <td>
+                ${tipo === "archivo" 
+                  ? `<a href="https://drive.google.com/file/d/${driveId}" target="_blank">Abrir</a>`
+                  : ''}
+              </td>
+            </tr>
+          `;
+        }).join("")}
+      </tbody>
+    </table>
+  `;
 }
 
 // 🔥 ABRIR
-function abrir(id, tipo, driveId) {
+function abrir(id, tipo, driveId, nombre) {
+
   if (tipo === "carpeta") {
+
     padreActual = id;
     padreDrive = driveId;
+
+    ruta.push({
+      id: id,
+      nombre: nombre,
+      drive: driveId
+    });
+
+    actualizarRuta();
     cargar();
+
   } else {
     window.open(`https://drive.google.com/file/d/${driveId}`);
   }
@@ -150,6 +182,27 @@ function subir() {
 
   reader.readAsDataURL(file);
 }
+
+function actualizarRuta() {
+  const cont = document.getElementById("ruta");
+
+  cont.innerHTML = ruta.map((r, i) => {
+    return `<span onclick="irA(${i})">${r.nombre}</span>`;
+  }).join(" / ");
+}
+
+function irA(index) {
+  const nivel = ruta[index];
+
+  padreActual = nivel.id;
+  padreDrive = nivel.drive;
+
+  ruta = ruta.slice(0, index + 1);
+
+  actualizarRuta();
+  cargar();
+}
+
 // 🔥 LOGOUT
 function logout() {
   localStorage.clear();
