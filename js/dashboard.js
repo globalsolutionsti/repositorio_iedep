@@ -1,6 +1,9 @@
 const API = "https://script.google.com/macros/s/AKfycbw1ivWeBv0Fh6fiM9hQM_x8VXOtLpb_EhJHAxRVYwP5cyxNYBB7iTYFt8wyP5tppLGk/exec";
-
 const user = JSON.parse(localStorage.getItem("user"));
+
+let padreActual = 0;
+let padreDrive = "";
+let ruta = []; // 🔥 historial navegación
 
 if (!user) {
   window.location.href = "index.html";
@@ -10,19 +13,22 @@ document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("nombreUsuario").innerText = user.nombre;
 });
 
-let padreActual = 0;
-let padreDrive = "";
-
 // 🔥 OBTENER ROOT
 function init() {
   fetch(`${API}?action=getRoot`)
   .then(r => r.json())
   .then(root => {
-    console.log("ROOT:", root);
 
     padreActual = root.id;
     padreDrive = root.drive;
 
+    ruta = [{
+      id: root.id,
+      nombre: root.nombre,
+      drive: root.drive
+    }];
+
+    actualizarRuta();
     cargar();
   });
 }
