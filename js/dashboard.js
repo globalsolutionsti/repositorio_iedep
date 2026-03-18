@@ -31,7 +31,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  init(); // ⚡ No mostrar spinner global al inicio
+  init(); // ⚡ No mostrar spinner global al iniciar
 });
 
 // 🔥 ROOT
@@ -41,11 +41,9 @@ function init() {
     .then(root => {
       padreActual = root.id;
       padreDrive = root.drive;
-
       ruta = [{ id: root.id, nombre: root.nombre, drive: root.drive }];
       actualizarRuta();
-
-      cargar(false); // ⚡ false = no mostrar loader global al cargar dashboard
+      cargar(false); // ⚡ false = no mostrar spinner global al iniciar
     })
     .catch(err => {
       console.error(err);
@@ -53,7 +51,7 @@ function init() {
     });
 }
 
-// 🔥 CARGAR (CACHE + LOADER ROBUSTO)
+// 🔥 CARGAR (CACHE + LOADER)
 function cargar(mostrarLoaderGlobal = true) {
   if (mostrarLoaderGlobal) showGlobalLoader();
 
@@ -143,7 +141,7 @@ function irA(index) {
   padreDrive = nivel.drive;
   ruta = ruta.slice(0, index + 1);
   actualizarRuta();
-  cargar(true); // ⚡ mostrar loader global al navegar
+  cargar(true); // ⚡ mostrar loader global
 }
 
 // 🔥 RAÍZ
@@ -175,7 +173,7 @@ function nuevaCarpeta() {
       if (res.status) {
         toast("Carpeta creada correctamente");
         limpiarCache();
-        cargar(true); // ⚡ mostrar loader global al recargar estructura
+        cargar(true); // ⚡ loader global
       } else {
         toast("Error: " + res.error);
       }
@@ -215,7 +213,7 @@ function subirArchivoDirecto(file) {
         if (res.status) {
           toast("Archivo subido correctamente");
           limpiarCache();
-          cargar(true); // ⚡ mostrar loader global al recargar estructura
+          cargar(true); // ⚡ loader global
         } else {
           toast("Error: " + res.error);
         }
@@ -251,33 +249,64 @@ function obtenerIcono(nombre, tipo) {
 function mostrarLoader() { document.getElementById("loader").classList.remove("hidden"); }
 function ocultarLoader() { document.getElementById("loader").classList.add("hidden"); }
 
-// 🔥 LOADER GLOBAL
+// 🔥 LOADER GLOBAL CORREGIDO
 let loaderCount = 0;
 let loaderTimeout;
+
 function showGlobalLoader() {
   loaderCount++;
   const el = document.getElementById("globalLoader");
+
   if (loaderCount === 1) {
     el.classList.remove("hidden");
-    loaderTimeout = setTimeout(() => { loaderCount = 0; el.classList.add("hidden"); }, 10000);
+
+    // 🔹 Timeout de seguridad por si fetch se queda colgado
+    loaderTimeout = setTimeout(() => {
+      console.warn("Loader forzado a cerrar tras 10s");
+      loaderCount = 0;
+      el.classList.add("hidden");
+    }, 10000);
   }
 }
+
 function hideGlobalLoader(force = false) {
-  if (force) loaderCount = 0; else loaderCount--;
-  if (loaderCount <= 0) { loaderCount = 0; const el = document.getElementById("globalLoader"); el.classList.add("hidden"); clearTimeout(loaderTimeout); }
+  const el = document.getElementById("globalLoader");
+
+  if (force) {
+    loaderCount = 0;
+    el.classList.add("hidden");
+    clearTimeout(loaderTimeout);
+    return;
+  }
+
+  loaderCount--;
+  if (loaderCount <= 0) {
+    loaderCount = 0;
+    el.classList.add("hidden");
+    clearTimeout(loaderTimeout);
+  }
 }
 
 // 🔥 TOAST
-function toast(msg) { const t = document.getElementById("toast"); t.innerText = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 3000); }
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.innerText = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
 
 // 🔥 LOGOUT
-function logout() { localStorage.removeItem("usuario"); window.location.href = "index.html"; }
+function logout() {
+  localStorage.removeItem("usuario");
+  window.location.href = "index.html";
+}
 
 // 🔥 DRAG & DROP
 const dropZone = document.getElementById("dropZone");
 ["dragenter", "dragover", "dragleave", "drop"].forEach(event => {
   document.addEventListener(event, e => { e.preventDefault(); e.stopPropagation(); }, false);
 });
+
 document.addEventListener("dragenter", () => { if (dropZone) dropZone.classList.remove("hidden"); });
 document.addEventListener("dragleave", (e) => { if (e.clientX === 0 && e.clientY === 0) { if (dropZone) dropZone.classList.add("hidden"); } });
 document.addEventListener("drop", (e) => {
