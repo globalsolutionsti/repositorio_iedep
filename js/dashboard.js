@@ -9,6 +9,8 @@ const API = "https://script.google.com/macros/s/AKfycbwbY1bdXy9IJqBn9_pwF_5JNnHF
 let padreActual = 0;
 let padreDrive = "";
 
+document.getElementById("nombreUsuario").innerText = user.nombre;
+
 // 🔥 CARGAR ROOT REAL DESDE SHEETS
 function init() {
   fetch(API, {
