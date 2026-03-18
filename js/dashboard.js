@@ -19,8 +19,11 @@ function init() {
   })
   .then(r => r.json())
   .then(root => {
+    console.log("ROOT:", root); // 👈 DEBUG
+
     padreActual = root.id;
     padreDrive = root.drive;
+
     cargar();
   });
 }
