@@ -1,4 +1,4 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbyGGvQ9LjXKumtDo5d6Nbn9bF5bZAn95OQ8bZk86aHSsgPakaGjHieEDtDZk9c1mSLv/exec";
+const API = "https://script.google.com/macros/s/AKfycbyGGvQ9LjXKumtDo5d6Nbn9bF5bZAn95OQ8bZk86aHSsgPakaGjHieEDtDZk9c1mSLv/exec";
 
 let padreActual = 0;
 let padreDrive = "";
