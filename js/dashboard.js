@@ -324,26 +324,40 @@ function logout() {
 }
 const dropZone = document.getElementById("dropZone");
 
-document.addEventListener("dragover", (e) => {
-  e.preventDefault();
+// 🔥 BLOQUEAR comportamiento del navegador
+["dragenter", "dragover", "dragleave", "drop"].forEach(event => {
+  document.addEventListener(event, e => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, false);
+});
+
+// 🔥 MOSTRAR OVERLAY
+document.addEventListener("dragenter", () => {
   dropZone.classList.remove("hidden");
 });
 
+// 🔥 OCULTAR OVERLAY
 document.addEventListener("dragleave", (e) => {
   if (e.clientX === 0 && e.clientY === 0) {
     dropZone.classList.add("hidden");
   }
 });
 
+// 🔥 DROP REAL
 document.addEventListener("drop", (e) => {
-  e.preventDefault();
+
   dropZone.classList.add("hidden");
 
   const files = e.dataTransfer.files;
 
-  if (files.length > 0) {
-    subirArchivoDirecto(files[0]);
+  if (!files || files.length === 0) {
+    toast("No se detectó archivo");
+    return;
   }
+
+  // 🔥 SOLO PRIMER ARCHIVO (luego hacemos multi-upload)
+  subirArchivoDirecto(files[0]);
 });
 
 function subirArchivoDirecto(file) {
