@@ -158,16 +158,19 @@ function subir() {
     const base64 = e.target.result.split(",")[1];
 
     fetch(API, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "subirArchivo",
-        nombre: file.name,
-        tipo: file.type,
-        archivo: base64,
-        padre: padreActual,
-        padre_drive: padreDrive
-      })
-    })
+  method: "POST",
+  body: JSON.stringify({
+    action: "subirArchivo",
+    nombre: file.name,
+    tipo: file.type,
+    archivo: base64,
+    padre: padreActual,
+    padre_drive: padreDrive
+  }),
+  headers: {
+    "Content-Type": "text/plain;charset=utf-8"
+  }
+})
     .then(r => r.json())
     .then(res => {
 
