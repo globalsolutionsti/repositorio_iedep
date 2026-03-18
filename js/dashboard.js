@@ -322,3 +322,74 @@ function logout() {
   localStorage.removeItem("usuario");
   window.location.href = "index.html";
 }
+const dropZone = document.getElementById("dropZone");
+
+document.addEventListener("dragover", (e) => {
+  e.preventDefault();
+  dropZone.classList.remove("hidden");
+});
+
+document.addEventListener("dragleave", (e) => {
+  if (e.clientX === 0 && e.clientY === 0) {
+    dropZone.classList.add("hidden");
+  }
+});
+
+document.addEventListener("drop", (e) => {
+  e.preventDefault();
+  dropZone.classList.add("hidden");
+
+  const files = e.dataTransfer.files;
+
+  if (files.length > 0) {
+    subirArchivoDirecto(files[0]);
+  }
+});
+
+function subirArchivoDirecto(file) {
+
+  mostrarLoader();
+
+  const reader = new FileReader();
+
+  reader.onload = function(e) {
+
+    const base64 = e.target.result.split(",")[1];
+
+    fetch(API, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "subirArchivo",
+        nombre: file.name,
+        tipo: file.type,
+        archivo: base64,
+        padre: padreActual,
+        padre_drive: padreDrive
+      }),
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      }
+    })
+    .then(r => r.json())
+    .then(res => {
+
+      ocultarLoader();
+
+      if (res.status) {
+        toast("Archivo subido correctamente");
+        cargar();
+      } else {
+        toast("Error: " + res.error);
+      }
+
+    })
+    .catch(err => {
+      ocultarLoader();
+      console.error(err);
+      toast("Error en subida");
+    });
+
+  };
+
+  reader.readAsDataURL(file);
+}
