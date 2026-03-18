@@ -58,7 +58,49 @@ button {
   .left {
     height:40%;
   }
+.dashboard {
+  display:flex;
+  height:100vh;
+}
 
+.sidebar {
+  width:220px;
+  background:#7a0c12;
+  color:white;
+  padding:20px;
+}
+
+.sidebar ul {
+  list-style:none;
+  padding:0;
+}
+
+.sidebar li {
+  margin:15px 0;
+  cursor:pointer;
+}
+
+.content {
+  flex:1;
+  padding:20px;
+  background:#f5f5f5;
+}
+
+button {
+  margin-bottom:10px;
+}
+
+@media (max-width:768px) {
+  .dashboard {
+    flex-direction:column;
+  }
+
+  .sidebar {
+    width:100%;
+    display:flex;
+    justify-content:space-around;
+  }
+}
   .right {
     height:60%;
   }
