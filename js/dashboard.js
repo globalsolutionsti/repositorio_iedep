@@ -1,4 +1,4 @@
-const API_URL = "TU_URL_DEPLOY";
+const API_URL = "https://script.google.com/macros/s/AKfycbz3yMl9gFYvv40j5HyK5QiKNf9TCIMTyd7zdR-9c2ryYvMT8c0NGp7JmtW7VrXs8qH2/exec";
 
 window.onload = () => {
   const user = localStorage.getItem('usuario');
