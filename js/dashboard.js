@@ -3,11 +3,22 @@ const API = "https://script.google.com/macros/s/AKfycbzN8BoLMmbWVJACVtvlQVnoX29P
 let padreActual = 0;
 let padreDrive = "";
 let ruta = [];
+let user = null;
+
 
 // 🔥 INICIALIZACIÓN SEGURA
 document.addEventListener("DOMContentLoaded", () => {
 
-  const user = JSON.parse(localStorage.getItem("usuario"));
+  try {
+    const data = localStorage.getItem("usuario");
+
+    if (data && data !== "undefined") {
+      user = JSON.parse(data);
+    }
+
+  } catch (e) {
+    console.warn("Error parsing user:", e);
+  }
 
   console.log("USER:", user);
 
@@ -59,7 +70,7 @@ function cargar() {
 }
 
 
-// 🔥 RENDER SHAREPOINT STYLE
+// 🔥 RENDER (TIPO SHAREPOINT)
 function render(data) {
   const cont = document.getElementById("explorador");
 
@@ -112,7 +123,6 @@ function abrir(id, tipo, driveId, nombre) {
 
     const ultimo = ruta[ruta.length - 1];
 
-    // 🔥 evitar duplicados
     if (ultimo && ultimo.id === id) return;
 
     padreActual = id;
@@ -133,7 +143,7 @@ function abrir(id, tipo, driveId, nombre) {
 }
 
 
-// 🔥 BREADCRUMB
+// 🔥 BREADCRUMB DINÁMICO
 function actualizarRuta() {
   const cont = document.getElementById("ruta");
 
@@ -143,7 +153,7 @@ function actualizarRuta() {
 }
 
 
-// 🔥 IR A NIVEL
+// 🔥 NAVEGAR A NIVEL
 function irA(index) {
 
   const nivel = ruta[index];
@@ -164,7 +174,7 @@ function irRaiz() {
 }
 
 
-// 🔥 CREAR CARPETA (POST FIX CORS)
+// 🔥 CREAR CARPETA (POST FIX)
 function nuevaCarpeta() {
 
   const nombre = prompt("Nombre carpeta");
@@ -201,7 +211,7 @@ function nuevaCarpeta() {
 }
 
 
-// 🔥 SUBIR ARCHIVO
+// 🔥 SUBIR ARCHIVO (FUNCIONAL)
 function subir() {
 
   const fileInput = document.getElementById("fileInput");
