@@ -15,7 +15,7 @@ function login() {
       localStorage.setItem("user", JSON.stringify(d));
       window.location = "dashboard.html";
     } else {
-      alert("Error");
+      alert("Usuario incorrecto");
     }
   });
 }
