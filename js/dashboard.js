@@ -1,7 +1,21 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbxj82IShlz12wgYmGDsC7tWu0CXJCWEq8gQpfMjs00nuozxUz6I14KAfUAfWhIUKlkD/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyGGvQ9LjXKumtDo5d6Nbn9bF5bZAn95OQ8bZk86aHSsgPakaGjHieEDtDZk9c1mSLv/exec";
 
 let padreActual = 0;
-let padreDrive = "ID_ROOT";
+let padreDrive = "";
+
+// 🔥 CARGAR ROOT REAL DESDE SHEETS
+function init() {
+  fetch(API, {
+    method: "POST",
+    body: JSON.stringify({ action: "getRoot" })
+  })
+  .then(r => r.json())
+  .then(root => {
+    padreActual = root.id;
+    padreDrive = root.drive;
+    cargar();
+  });
+}
 
 function cargar() {
   fetch(API, {
@@ -24,7 +38,7 @@ function render(data) {
     const icono = tipo === "carpeta" ? "📁" : "📄";
 
     cont.innerHTML += `
-      <div class="card-item" onclick="abrir(${row[0]}, '${row[2]}', '${row[4]}')">
+      <div class="card-item" onclick="abrir(${row[0]}, '${tipo}', '${row[4]}')">
         <div class="icon">${icono}</div>
         <div>${row[1]}</div>
       </div>
@@ -42,6 +56,11 @@ function abrir(id, tipo, driveId) {
   }
 }
 
+// 🔥 NUEVA FUNCIÓN
+function irRaiz() {
+  init();
+}
+
 function nuevaCarpeta() {
   const nombre = prompt("Nombre carpeta");
 
@@ -53,7 +72,7 @@ function nuevaCarpeta() {
       padre: padreActual,
       padre_drive: padreDrive
     })
-  }).then(cargar);
+  }).then(() => cargar());
 }
 
 function subir() {
@@ -88,7 +107,7 @@ function subir() {
         cargar();
       } else {
         console.error(res.error);
-        alert("Error al subir");
+        alert("Error real: " + res.error);
       }
     });
   };
@@ -101,4 +120,4 @@ function logout() {
   window.location = "index.html";
 }
 
-window.onload = cargar;
+window.onload = init;
