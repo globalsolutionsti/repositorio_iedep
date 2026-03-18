@@ -1,21 +1,35 @@
-const API_URL = "https://script.google.com/macros/s/AKfycbyGGvQ9LjXKumtDo5d6Nbn9bF5bZAn95OQ8bZk86aHSsgPakaGjHieEDtDZk9c1mSLv/exec";
+const API = "https://script.google.com/macros/s/AKfycbyGGvQ9LjXKumtDo5d6Nbn9bF5bZAn95OQ8bZk86aHSsgPakaGjHieEDtDZk9c1mSLv/exec";
+
 
 function login() {
+
+  const usuario = document.getElementById("usuario").value;
+  const pin = document.getElementById("pin").value;
+
+  if (!usuario || !pin) {
+    alert("Completa todos los campos");
+    return;
+  }
+
   fetch(API, {
     method: "POST",
     body: JSON.stringify({
       action: "login",
-      usuario: usuario.value,
-      pin: pin.value
+      usuario: usuario,
+      pin: pin
     })
   })
   .then(r => r.json())
   .then(d => {
     if (d.status) {
       localStorage.setItem("user", JSON.stringify(d));
-      window.location = "dashboard.html";
+      window.location.href = "dashboard.html";
     } else {
-      alert("Usuario incorrecto");
+      alert("Usuario o PIN incorrecto");
     }
+  })
+  .catch(err => {
+    console.error(err);
+    alert("Error de conexión");
   });
 }
