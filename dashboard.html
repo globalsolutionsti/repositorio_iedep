@@ -1,41 +1,57 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gestor Documental</title>
-<link rel="stylesheet" href="css/styles.css">
-</head>
 <body>
 
-<div class="dashboard">
+<div class="layout">
+
+  <!-- SIDEBAR -->
   <aside class="sidebar">
-    <h2>IEDEP</h2>
-    <ul>
-      <li onclick="loadDocumentos()">📂 Documentos</li>
-      <li>⚙️ Configuración</li>
-    </ul>
+    <div class="logo">IEDEP</div>
+
+    <nav>
+      <a class="active">📂 Documentos</a>
+      <a>📊 Reportes</a>
+      <a>⚙️ Configuración</a>
+    </nav>
   </aside>
 
-  <main class="content">
-    <h1>Gestor de Documentos</h1>
+  <!-- MAIN -->
+  <div class="main">
 
-    <button onclick="subirArchivo()">Subir Documento</button>
+    <!-- HEADER -->
+    <header class="header">
+      <h1>Gestor Documental</h1>
+      <div class="user">
+        <span id="nombreUsuario"></span>
+        <button onclick="logout()">Salir</button>
+      </div>
+    </header>
 
-    <table id="tablaDocs">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Área</th>
-          <th>Versión</th>
-          <th>Acciones</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-  </main>
+    <!-- CONTENT -->
+    <section class="content">
+
+      <div class="toolbar">
+        <button class="btn-primary" onclick="subirArchivo()">+ Subir Documento</button>
+        <input type="text" placeholder="Buscar documento..." onkeyup="buscar(this.value)">
+      </div>
+
+      <div class="table-container">
+        <table id="tablaDocs">
+          <thead>
+            <tr>
+              <th>Documento</th>
+              <th>Área</th>
+              <th>Versión</th>
+              <th>Fecha</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+    </section>
+
+  </div>
 </div>
 
 <script src="js/dashboard.js"></script>
 </body>
-</html>
