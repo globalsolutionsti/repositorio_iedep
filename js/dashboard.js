@@ -254,7 +254,32 @@ function subir() {
 
   reader.readAsDataURL(file);
 }
+function obtenerIcono(nombre, tipo) {
 
+  if (tipo === "carpeta") return "📁";
+
+  const ext = nombre.includes(".")
+    ? nombre.split(".").pop().toLowerCase()
+    : "";
+
+  switch (ext) {
+    case "pdf": return "📕";
+    case "doc":
+    case "docx": return "📘";
+    case "xls":
+    case "xlsx": return "📗";
+    case "ppt":
+    case "pptx": return "📙";
+    case "jpg":
+    case "jpeg":
+    case "png": return "🖼️";
+    case "zip":
+    case "rar": return "🗜️";
+    case "mp4": return "🎬";
+    case "mp3": return "🎵";
+    default: return "📄";
+  }
+}
 
 // 🔥 LOGOUT
 function logout() {
