@@ -80,38 +80,29 @@ function render(data) {
   }
 
   cont.innerHTML = `
-    <table>
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Tipo</th>
-          <th>Acción</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${data.map(row => {
+    <div class="grid-cards">
+      ${data.map(row => {
 
-          const id = row[0];
-          const nombre = row[1];
-          const tipo = row[2];
-          const driveId = row[4];
+        const id = row[0];
+        const nombre = row[1];
+        const tipo = row[2];
+        const driveId = row[4];
 
-          return `
-            <tr>
-              <td onclick="abrir(${id}, '${tipo}', '${driveId}', '${nombre}')">
-                ${tipo === "carpeta" ? "📁" : "📄"} ${nombre}
-              </td>
-              <td>${tipo}</td>
-              <td>
-                ${tipo === "archivo"
-                  ? `<a href="https://drive.google.com/file/d/${driveId}" target="_blank">Abrir</a>`
-                  : ''}
-              </td>
-            </tr>
-          `;
-        }).join("")}
-      </tbody>
-    </table>
+        const icono = obtenerIcono(nombre, tipo);
+
+        return `
+          <div class="card-item" onclick="abrir(${id}, '${tipo}', '${driveId}', '${nombre}')">
+            
+            <div class="card-icon">${icono}</div>
+
+            <div class="card-name">${nombre}</div>
+
+            <div class="card-type">${tipo}</div>
+
+          </div>
+        `;
+      }).join("")}
+    </div>
   `;
 }
 
