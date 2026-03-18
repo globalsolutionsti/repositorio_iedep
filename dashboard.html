@@ -25,17 +25,39 @@
 
     <div class="content">
 
+      <!-- 🔥 BREADCRUMB -->
       <div class="breadcrumb">
         <span onclick="irRaiz()">🏠 Inicio</span> /
         <span id="ruta">Documentos</span>
       </div>
 
-      <div class="toolbar">
-        <button onclick="nuevaCarpeta()">📁 Nueva Carpeta</button>
-        <input type="file" id="fileInput">
-        <button onclick="subir()">⬆ Subir</button>
+      <!-- 🔥 NUEVA BARRA PRO -->
+      <div class="acciones-bar">
+
+        <button class="btn-primary" onclick="nuevaCarpeta()">
+          + Nueva carpeta
+        </button>
+
+        <div class="upload-group">
+          <input type="file" id="fileInput" hidden>
+
+          <button class="btn-secondary" onclick="document.getElementById('fileInput').click()">
+            Seleccionar archivo
+          </button>
+
+          <span id="fileName">Ningún archivo seleccionado</span>
+
+          <button class="btn-success" onclick="subir()">
+            Subir
+          </button>
+        </div>
+
+        <!-- 🔥 LOADER -->
+        <div id="loader" class="loader hidden"></div>
+
       </div>
 
+      <!-- 🔥 EXPLORADOR -->
       <div id="explorador" class="grid"></div>
 
     </div>
@@ -43,6 +65,9 @@
   </div>
 
 </div>
+
+<!-- 🔥 TOAST -->
+<div id="toast" class="toast"></div>
 
 <script src="js/dashboard.js"></script>
 
