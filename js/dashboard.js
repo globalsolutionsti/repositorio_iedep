@@ -30,25 +30,42 @@ document.addEventListener("DOMContentLoaded", () => {
   init();
 });
 
-// 🔥 ROOT
+// 🔥 PARSER SEGURO (🔥 CLAVE DEL FIX)
+async function safeFetch(url, options = null) {
+  const res = await fetch(url, options);
+  const text = await res.text();
+
+  try {
+    return JSON.parse(text);
+  } catch (e) {
+    console.error("❌ Respuesta inválida del backend:", text);
+    throw new Error("Backend no devolvió JSON válido");
+  }
+}
+
+// 🔥 ROOT (CORREGIDO)
 function init() {
-  fetch(`${API}?action=getRoot`)
-    .then(r => r.json())
+  safeFetch(`${API}?action=getRoot`)
     .then(root => {
+
+      if (!root || !root.id) throw new Error("Root inválido");
+
       padreActual = root.id;
       padreDrive = root.drive;
       ruta = [{ id: root.id, nombre: root.nombre, drive: root.drive }];
+
       actualizarRuta();
-      cargar(false); // ✅ YA NO muestra loader global aquí
+      cargar(false);
+
     })
     .catch(err => {
-      console.error(err);
+      console.error("ERROR ROOT:", err);
       toast("Error cargando raíz");
       hideGlobalLoader(true);
     });
 }
 
-// 🔥 CARGAR
+// 🔥 CARGAR (FIX DEFINITIVO)
 function cargar(mostrarLoaderGlobal = true) {
 
   if (mostrarLoaderGlobal) showGlobalLoader();
@@ -61,18 +78,21 @@ function cargar(mostrarLoaderGlobal = true) {
     catch (e) { console.warn("Cache corrupto"); }
   }
 
-  fetch(`${API}?action=getEstructura&padre=${padreActual}`)
-    .then(r => r.json())
+  safeFetch(`${API}?action=getEstructura&padre=${padreActual}`)
     .then(data => {
+
+      if (!data) throw new Error("Respuesta vacía");
+
       render(data);
       localStorage.setItem(cacheKey, JSON.stringify(data));
+
     })
     .catch(err => {
-      console.error(err);
+      console.error("ERROR CARGAR:", err);
       toast("Error cargando estructura");
     })
     .finally(() => {
-      hideGlobalLoader(true); // ✅ SIEMPRE se apaga
+      hideGlobalLoader(true); // 🔥 GARANTIZADO
     });
 }
 
@@ -131,7 +151,7 @@ function irA(index) {
   cargar(true);
 }
 
-// 🔥 RAÍZ (CORREGIDO)
+// 🔥 RAÍZ
 function irRaiz() {
   if (ruta.length > 0) {
     const root = ruta[0];
@@ -157,12 +177,11 @@ function nuevaCarpeta() {
 
   mostrarLoader();
 
-  fetch(API, {
+  safeFetch(API, {
     method: "POST",
     body: JSON.stringify({ action: "crearCarpeta", nombre, padre: padreActual, padre_drive: padreDrive }),
     headers: { "Content-Type": "text/plain;charset=utf-8" }
   })
-    .then(r => r.json())
     .then(res => {
       if (res.status) {
         toast("Carpeta creada correctamente");
@@ -197,7 +216,7 @@ function subirArchivoDirecto(file) {
   reader.onload = function(e) {
     const base64 = e.target.result.split(",")[1];
 
-    fetch(API, {
+    safeFetch(API, {
       method: "POST",
       body: JSON.stringify({
         action:"subirArchivo",
@@ -209,7 +228,6 @@ function subirArchivoDirecto(file) {
       }),
       headers: {"Content-Type":"text/plain;charset=utf-8"}
     })
-      .then(r=>r.json())
       .then(res=>{
         if(res.status){
           toast("Archivo subido correctamente");
@@ -255,7 +273,7 @@ function ocultarLoader() {
   document.getElementById("loader").classList.add("hidden");
 }
 
-// 🔥 LOADER GLOBAL (ANTI BUG DEFINITIVO)
+// 🔥 LOADER GLOBAL
 let loaderActivo = false;
 let loaderTimeout;
 
@@ -267,7 +285,7 @@ function showGlobalLoader() {
   el.classList.remove("hidden");
 
   loaderTimeout = setTimeout(() => {
-    console.warn("Loader forzado a cerrar");
+    console.warn("⚠️ Loader forzado a cerrar");
     hideGlobalLoader(true);
   }, 8000);
 }
