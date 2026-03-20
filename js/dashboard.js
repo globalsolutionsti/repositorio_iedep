@@ -13,6 +13,8 @@ let dataActual = []; // 🔥 cache en memoria (rendimiento)
 let filtroTipo = "todos";
 let textoBusqueda = "";
 
+let favoritos = [];
+
 /* 🔥 FIX DEFINITIVO */
 window.vista = "grid";
 
@@ -125,6 +127,7 @@ function init() {
       toast("Error cargando raíz");
     });
 cargarStats();
+cargarFavoritosUsuario();
 }
 
 /* =========================
@@ -254,20 +257,27 @@ function render(data) {
 
     // 🔥 MODO LISTA
     if (modoVista === "lista") item.classList.add("item-lista");
-
+    const esFav = favoritos.includes(id);
     item.innerHTML = `
       <div class="card-icon">${obtenerIcono(nombre, tipo)}</div>
       <div class="card-name">${nombre}</div>
       <div class="card-type">${tipo}</div>
-      <div onclick="event.stopPropagation(); toggleFavorito(${id})">
-  ${"⭐"}
+     
+      <div class="acciones-item">
+  <span onclick="event.stopPropagation(); toggleFavorito(${id})">
+  ${esFav ? "⭐" : "☆"}
+</span>
+  <span onclick="event.stopPropagation(); eliminarItem(${id}, '${nombre}')">🗑</span>
 </div>
-      <div onclick="event.stopPropagation(); eliminarItem(${id}, '${nombre}')">🗑</div>
     `;
 
-    item.addEventListener("click", () => {
-      abrir(id, tipo, driveId, nombre);
-    });
+   item.onclick = (e) => {
+
+  // 🔥 si clic viene de botón interno, NO abrir
+  if (e.target.closest(".acciones-item")) return;
+
+  abrir(id, tipo, driveId, nombre);
+};
 
     wrapper.appendChild(item);
   });
@@ -524,7 +534,16 @@ function toggleFavorito(id) {
   })
   .then(res => {
     if (res.status) {
-      toast(res.favorito ? "⭐ Agregado a favoritos" : "❌ Eliminado de favoritos");
+
+      if (res.favorito) {
+        favoritos.push(id);
+      } else {
+        favoritos = favoritos.filter(f => f != id);
+      }
+
+      aplicarFiltros(); // 🔥 refresca UI
+
+      toast(res.favorito ? "⭐ Agregado" : "❌ Eliminado d eFavoritos");
     }
   });
 }
@@ -594,4 +613,20 @@ function verFavoritos() {
   })
   .catch(() => toast("Error conexión"))
   .finally(() => hideGlobalLoader());
+}
+function cargarFavoritosUsuario() {
+
+  safeFetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "obtenerFavoritos",
+      usuario: user.usuario
+    }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
+  })
+  .then(res => {
+    if (res.status) {
+      favoritos = res.data.map(f => f[0]); // IDs
+    }
+  });
 }
