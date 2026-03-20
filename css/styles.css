@@ -245,10 +245,11 @@ table td a:hover {
     width: 100%;
   }
 }
-.grid {
+.grid-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 15px;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 20px;
+  padding: 10px;
 }
 
 .card-item {
