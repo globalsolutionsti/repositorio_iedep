@@ -14,7 +14,7 @@ let filtroTipo = "todos";
 let textoBusqueda = "";
 
 /* 🔥 FIX DEFINITIVO */
-window.vista = "grid"; // ← GLOBAL REAL (nunca vuelve a undefined)
+window.vista = "grid";
 
 /* 🔥 PERMISOS */
 const PERMISOS = {
@@ -53,9 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  /* 🔥 DRAG & DROP SEGURO */
   initDragDrop();
-
   init();
 });
 
@@ -129,7 +127,7 @@ function init() {
 }
 
 /* =========================
-   🔥 CARGAR
+   🔥 CARGAR (MEJORADO)
 ========================= */
 function cargar(mostrarLoaderGlobal = true) {
 
@@ -142,10 +140,10 @@ function cargar(mostrarLoaderGlobal = true) {
 
       if (!data) throw new Error("Respuesta vacía");
 
-      // 🔥 SOPORTE UNIVERSAL
       if (data.data) data = data.data;
 
-      render(data);
+      dataActual = data; // 🔥 cache memoria
+      aplicarFiltros();  // 🔥 usa filtros + buscador
 
     })
     .catch(err => {
@@ -158,7 +156,66 @@ function cargar(mostrarLoaderGlobal = true) {
 }
 
 /* =========================
-   🔥 RENDER PRO (NO FALLA)
+   🔥 FILTROS + BUSCADOR
+========================= */
+function aplicarFiltros() {
+
+  let filtrado = [...dataActual];
+
+  // 🔍 BUSCADOR
+  if (textoBusqueda) {
+    filtrado = filtrado.filter(row => {
+      const nombre = Array.isArray(row) ? row[1] : row.nombre;
+      return nombre.toLowerCase().includes(textoBusqueda);
+    });
+  }
+
+  // 🎛 FILTRO
+  if (filtroTipo !== "todos") {
+    filtrado = filtrado.filter(row => {
+
+      const nombre = Array.isArray(row) ? row[1].toLowerCase() : row.nombre.toLowerCase();
+      const tipo = Array.isArray(row) ? row[2] : row.tipo;
+
+      if (filtroTipo === "carpeta") return tipo === "carpeta";
+      if (filtroTipo === "pdf") return nombre.endsWith(".pdf");
+      if (filtroTipo === "imagen") return /\.(jpg|jpeg|png)/.test(nombre);
+      if (filtroTipo === "video") return nombre.endsWith(".mp4");
+
+      return true;
+    });
+  }
+
+  render(filtrado);
+}
+
+/* =========================
+   🔥 BUSCAR
+========================= */
+function buscar(valor) {
+  textoBusqueda = valor.toLowerCase();
+  aplicarFiltros();
+}
+
+/* =========================
+   🔥 FILTRAR
+========================= */
+function filtrarTipo(tipo) {
+  filtroTipo = tipo;
+  aplicarFiltros();
+}
+
+/* =========================
+   🔥 CAMBIAR VISTA
+========================= */
+function cambiarVista() {
+  vista = vista === "grid" ? "lista" : "grid";
+  window.vista = vista;
+  aplicarFiltros();
+}
+
+/* =========================
+   🔥 RENDER PRO (MEJORADO)
 ========================= */
 function render(data) {
 
@@ -194,6 +251,9 @@ function render(data) {
     const item = document.createElement("div");
     item.className = "card-item";
 
+    // 🔥 MODO LISTA
+    if (modoVista === "lista") item.classList.add("item-lista");
+
     item.innerHTML = `
       <div class="card-icon">${obtenerIcono(nombre, tipo)}</div>
       <div class="card-name">${nombre}</div>
@@ -209,28 +269,20 @@ function render(data) {
 }
 
 /* =========================
-   🔥 ABRIR (FIX NAVEGACIÓN)
+   🔥 RESTO (SIN CAMBIOS)
 ========================= */
 function abrir(id, tipo, driveId, nombre) {
-
   if (tipo === "carpeta") {
-
     padreActual = id;
     padreDrive = driveId;
-
     ruta.push({ id, nombre, drive: driveId });
-
     actualizarRuta();
     cargar(true);
-
   } else {
     previewArchivo(driveId);
   }
 }
 
-/* =========================
-   🔥 PREVIEW
-========================= */
 function previewArchivo(driveId) {
   const modal = document.getElementById("previewModal");
   const frame = document.getElementById("previewFrame");
@@ -243,9 +295,6 @@ function cerrarPreview() {
   document.getElementById("previewModal").classList.add("hidden");
 }
 
-/* =========================
-   🔥 RUTA
-========================= */
 function actualizarRuta() {
   document.getElementById("ruta").innerHTML =
     ruta.map((r, i) =>
@@ -345,15 +394,15 @@ function subirArchivoDirecto(file) {
       headers: { "Content-Type": "text/plain;charset=utf-8" }
     })
       .then(res => {
-  console.log("🔥 RESPUESTA SUBIDA:", res);
+        console.log("🔥 RESPUESTA SUBIDA:", res);
 
-  if (res.status) {
-    toast("Archivo subido correctamente");
-    cargar(true);
-  } else {
-    toast("Error: " + res.error);
-  }
-})
+        if (res.status) {
+          toast("Archivo subido correctamente");
+          cargar(true);
+        } else {
+          toast("Error: " + res.error);
+        }
+      })
       .catch(() => toast("Error subida"))
       .finally(() => ocultarLoader());
   };
@@ -362,7 +411,7 @@ function subirArchivoDirecto(file) {
 }
 
 /* =========================
-   🔥 DRAG & DROP (FIX REAL)
+   🔥 DRAG & DROP
 ========================= */
 function initDragDrop() {
 
@@ -398,11 +447,6 @@ function initDragDrop() {
 /* =========================
    🔥 UTILIDADES
 ========================= */
-function obtenerIcono(nombre, tipo) {
-  if (tipo === "carpeta") return "📁";
-  return "📄";
-}
-
 function mostrarLoader() {
   document.getElementById("loader").classList.remove("hidden");
 }
@@ -428,6 +472,10 @@ function logout() {
   localStorage.removeItem("usuario");
   window.location.href = "index.html";
 }
+
+/* =========================
+   🔥 ICONOS (TU VERSIÓN COMPLETA)
+========================= */
 function obtenerIcono(nombre, tipo) {
   if (tipo === "carpeta") return "📁";
 
