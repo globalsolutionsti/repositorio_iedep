@@ -10,19 +10,19 @@
 
 <div class="layout">
 
-  <!-- 🔥 SIDEBAR DINÁMICO -->
+  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="logo">IEDEP</div>
-
     <nav id="menu"></nav>
   </aside>
 
-  <!-- 🔥 MAIN -->
+  <!-- MAIN -->
   <div class="main">
 
     <!-- HEADER -->
     <div class="header">
       <h1 id="tituloModulo">Documentos</h1>
+
       <div class="user">
         <span id="nombreUsuario"></span>
         <button onclick="logout()">Salir</button>
@@ -40,26 +40,46 @@
 
       <!-- ACCIONES -->
       <div class="acciones-bar">
-        <button class="btn-primary" id="btnNuevaCarpeta" onclick="nuevaCarpeta()">+ Carpeta</button>
+
+        <button class="btn-primary" id="btnNuevaCarpeta" onclick="nuevaCarpeta()">
+          + Carpeta
+        </button>
 
         <div class="upload-group">
           <input type="file" id="fileInput" hidden>
-          <button onclick="fileInput.click()">Seleccionar</button>
+
+          <button onclick="document.getElementById('fileInput').click()">
+            Seleccionar
+          </button>
+
           <span id="fileName">Ningún archivo</span>
-          <button class="btn-success" onclick="subir()">Subir</button>
+
+          <button class="btn-success" onclick="subir()">
+            Subir
+          </button>
         </div>
 
+        <!-- LOADER LOCAL -->
         <div id="loader" class="loader hidden"></div>
+
       </div>
 
-      <!-- GRID -->
+      <!-- EXPLORADOR -->
       <div id="explorador" class="grid"></div>
 
     </div>
   </div>
+
 </div>
 
-<!-- 🔥 PREVIEW MODAL -->
+<!-- 🔥 DRAG & DROP -->
+<div id="dropZone" class="drop-zone hidden">
+  <div class="drop-content">
+    ⬇ Suelta el archivo aquí
+  </div>
+</div>
+
+<!-- 🔥 PREVIEW -->
 <div id="previewModal" class="modal hidden">
   <div class="modal-content">
     <span class="close" onclick="cerrarPreview()">✖</span>
@@ -67,22 +87,17 @@
   </div>
 </div>
 
-<!-- TOAST -->
+<!-- 🔥 TOAST -->
 <div id="toast" class="toast"></div>
 
-<!-- LOADER GLOBAL -->
+<!-- 🔥 LOADER GLOBAL -->
 <div id="globalLoader" class="global-loader hidden">
   <div class="loader-box">
     <div class="spinner"></div>
     <p>Cargando...</p>
   </div>
 </div>
-<div id="previewModal" class="modal hidden">
-  <div class="modal-content">
-    <span class="close" onclick="cerrarPreview()">✖</span>
-    <iframe id="previewFrame"></iframe>
-  </div>
-</div>
+
 <script src="js/dashboard.js"></script>
 
 </body>
