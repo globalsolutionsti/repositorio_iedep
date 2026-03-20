@@ -8,6 +8,11 @@ let padreDrive = "";
 let ruta = [];
 let user = null;
 
+let vista = "grid"; // grid | lista
+let dataActual = []; // 🔥 cache en memoria (rendimiento)
+let filtroTipo = "todos";
+let textoBusqueda = "";
+
 /* 🔥 FIX DEFINITIVO */
 window.vista = "grid"; // ← GLOBAL REAL (nunca vuelve a undefined)
 
