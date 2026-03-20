@@ -10,12 +10,15 @@
 
 <div class="layout">
 
+  <!-- 🔥 SIDEBAR -->
   <aside class="sidebar">
     <div class="logo">IEDEP</div>
   </aside>
 
+  <!-- 🔥 MAIN -->
   <div class="main">
 
+    <!-- 🔥 HEADER -->
     <div class="header">
       <h1>Gestor Documental</h1>
       <div class="user">
@@ -24,6 +27,7 @@
       </div>
     </div>
 
+    <!-- 🔥 CONTENT -->
     <div class="content">
 
       <!-- 🔥 BREADCRUMB -->
@@ -32,7 +36,7 @@
         <span id="ruta">Documentos</span>
       </div>
 
-      <!-- 🔥 NUEVA BARRA PRO -->
+      <!-- 🔥 BARRA DE ACCIONES -->
       <div class="acciones-bar">
 
         <button class="btn-primary" onclick="nuevaCarpeta()">+ Nueva carpeta</button>
@@ -52,7 +56,7 @@
       <!-- 🔥 EXPLORADOR -->
       <div id="explorador" class="grid"></div>
 
-      <!-- 🔥 DROP ZONE -->
+      <!-- 🔥 DRAG & DROP -->
       <div id="dropZone" class="drop-zone hidden">
         <div class="drop-content">⬇ Suelta el archivo aquí</div>
       </div>
@@ -66,7 +70,7 @@
 <!-- 🔥 TOAST -->
 <div id="toast" class="toast"></div>
 
-<!-- 🔥 SPINNER GLOBAL -->
+<!-- ✅ ÚNICO LOADER GLOBAL (CORRECTO) -->
 <div id="globalLoader" class="global-loader hidden">
   <div class="loader-box">
     <div class="spinner"></div>
@@ -76,9 +80,5 @@
 
 <script src="js/dashboard.js"></script>
 
-  
-  <div id="globalLoader" class="hidden">
-  <div class="spinner"></div>
-</div>
 </body>
 </html>
