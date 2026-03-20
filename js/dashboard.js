@@ -124,6 +124,7 @@ function init() {
       console.error("ERROR ROOT:", err);
       toast("Error cargando raíz");
     });
+cargarStats();
 }
 
 /* =========================
@@ -258,6 +259,8 @@ function render(data) {
       <div class="card-icon">${obtenerIcono(nombre, tipo)}</div>
       <div class="card-name">${nombre}</div>
       <div class="card-type">${tipo}</div>
+      <div onclick="event.stopPropagation(); toggleFavorito(${id})">⭐</div>
+      <div onclick="event.stopPropagation(); eliminarItem(${id}, '${nombre}')">🗑</div>
     `;
 
     item.addEventListener("click", () => {
@@ -522,4 +525,38 @@ function toggleFavorito(id) {
       toast(res.favorito ? "⭐ Agregado a favoritos" : "❌ Eliminado de favoritos");
     }
   });
+}
+
+function esFavorito(id) {
+  return false; // luego lo conectamos a backend real
+}
+
+function eliminarItem(id, nombre) {
+
+  if (!confirm("¿Enviar a papelera?")) return;
+
+  safeFetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "eliminar",
+      item_id: id,
+      nombre: nombre,
+      usuario: user.usuario
+    }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
+  })
+  .then(res => {
+    if (res.status) {
+      toast("Enviado a papelera");
+      cargar(true);
+    }
+  });
+}
+
+function cargarStats() {
+
+  safeFetch(`${API}?action=stats`)
+    .then(res => {
+      console.log("📊 STATS:", res);
+    });
 }
