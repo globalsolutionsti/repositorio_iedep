@@ -4,6 +4,7 @@ let padreActual = 0;
 let padreDrive = "";
 let ruta = [];
 let user = null;
+let vista = "grid";
 
 /* 🔥 PERMISOS */
 const PERMISOS = {
@@ -131,23 +132,30 @@ function cargar(mostrarLoaderGlobal = true) {
 function render(data) {
   const cont = document.getElementById("explorador");
 
-  if (!data.length) {
+  if (!data || !data.length) {
     cont.innerHTML = "<p>Sin resultados</p>";
     return;
   }
 
-  let clase = vista === "grid" ? "grid-cards" : "lista";
+  let clase = (typeof vista !== "undefined" && vista === "lista")
+    ? "lista"
+    : "grid-cards";
 
-  // 🔥 contenedor limpio
   cont.innerHTML = `<div class="${clase}" id="contenedorItems"></div>`;
 
   const wrapper = document.getElementById("contenedorItems");
 
+  if (!wrapper) {
+    console.error("❌ contenedorItems no existe");
+    return;
+  }
+
   data.forEach(row => {
+    if (!row) return;
+
     const [id, nombre, tipo, , driveId] = row;
     const icono = obtenerIcono(nombre, tipo);
 
-    // 🔥 crear elemento real (NO string)
     const item = document.createElement("div");
     item.className = "card-item";
 
@@ -157,7 +165,6 @@ function render(data) {
       <div class="card-type">${tipo}</div>
     `;
 
-    // 🔥 EVENTO REAL (AQUÍ ESTÁ EL FIX)
     item.addEventListener("click", () => {
       abrir(id, tipo, driveId, nombre);
     });
