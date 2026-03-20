@@ -130,35 +130,40 @@ function cargar(mostrarLoaderGlobal = true) {
 /* 🔥 RENDER (CON PREVIEW) */
 function render(data) {
   const cont = document.getElementById("explorador");
-  if (!data || data.length === 0) { cont.innerHTML = "<p>Sin elementos</p>"; return; }
 
-  let html = `<div class="grid-cards">`;
+  if (!data.length) {
+    cont.innerHTML = "<p>Sin resultados</p>";
+    return;
+  }
+
+  let clase = vista === "grid" ? "grid-cards" : "lista";
+
+  // 🔥 contenedor limpio
+  cont.innerHTML = `<div class="${clase}" id="contenedorItems"></div>`;
+
+  const wrapper = document.getElementById("contenedorItems");
 
   data.forEach(row => {
     const [id, nombre, tipo, , driveId] = row;
     const icono = obtenerIcono(nombre, tipo);
 
-    html += `
-      <div class="card-item">
+    // 🔥 crear elemento real (NO string)
+    const item = document.createElement("div");
+    item.className = "card-item";
 
-        <div onclick="abrir(${id}, '${tipo}', '${driveId}', '${nombre}')">
-          <div class="card-icon">${icono}</div>
-          <div class="card-name">${nombre}</div>
-          <div class="card-type">${tipo}</div>
-        </div>
-
-        ${tipo !== "carpeta" ? `
-          <button onclick="event.stopPropagation(); previewArchivo('${driveId}')">
-            👁
-          </button>
-        ` : ""}
-
-      </div>
+    item.innerHTML = `
+      <div class="card-icon">${icono}</div>
+      <div class="card-name">${nombre}</div>
+      <div class="card-type">${tipo}</div>
     `;
-  });
 
-  html += `</div>`;
-  cont.innerHTML = html;
+    // 🔥 EVENTO REAL (AQUÍ ESTÁ EL FIX)
+    item.addEventListener("click", () => {
+      abrir(id, tipo, driveId, nombre);
+    });
+
+    wrapper.appendChild(item);
+  });
 }
 
 /* 🔥 PREVIEW */
