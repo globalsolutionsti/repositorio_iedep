@@ -1,4 +1,4 @@
-const API = "https://script.google.com/macros/s/AKfycbzsqG5xDLy0qqonIsbNf61mRapiqswVshEVw0OeDNjkp8dzw5y5vxW3BPOLlDHKJxOW/exec";
+const API = "https://script.google.com/macros/s/AKfycbwHUT0R4aZP3r6QBQZ8TRtrLE5CJB2_ePX-4XlO8ssk-Sy4j_0hp5zw1fWWPi0ooEHN/exec";
 
 function login() {
 
