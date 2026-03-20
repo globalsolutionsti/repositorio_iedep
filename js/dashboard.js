@@ -340,13 +340,15 @@ function subirArchivoDirecto(file) {
       headers: { "Content-Type": "text/plain;charset=utf-8" }
     })
       .then(res => {
-        if (res.status) {
-          toast("Archivo subido");
-          cargar(true);
-        } else {
-          toast("Error: " + res.error);
-        }
-      })
+  console.log("🔥 RESPUESTA SUBIDA:", res);
+
+  if (res.status) {
+    toast("Archivo subido correctamente");
+    cargar(true);
+  } else {
+    toast("Error: " + res.error);
+  }
+})
       .catch(() => toast("Error subida"))
       .finally(() => ocultarLoader());
   };
