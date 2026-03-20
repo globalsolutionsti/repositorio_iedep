@@ -505,3 +505,21 @@ function obtenerIcono(nombre, tipo) {
     default: return "📄";
   }
 }
+
+function toggleFavorito(id) {
+
+  safeFetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "toggleFavorito",
+      usuario: user.usuario,
+      item_id: id
+    }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
+  })
+  .then(res => {
+    if (res.status) {
+      toast(res.favorito ? "⭐ Agregado a favoritos" : "❌ Eliminado de favoritos");
+    }
+  });
+}
