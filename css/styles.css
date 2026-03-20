@@ -379,3 +379,26 @@ button {
     justify-content: space-around;
   }
 }
+#buscador {
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+}
+
+.grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.item-lista {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
