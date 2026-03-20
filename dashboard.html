@@ -45,6 +45,28 @@
           + Carpeta
         </button>
 
+        <!-- 🔥 NUEVO: BUSCADOR -->
+        <input 
+          type="text" 
+          id="buscador"
+          placeholder="🔍 Buscar archivos..." 
+          oninput="buscar(this.value)"
+        >
+
+        <!-- 🔥 NUEVO: FILTRO -->
+        <select onchange="filtrarTipo(this.value)">
+          <option value="todos">Todos</option>
+          <option value="carpeta">Carpetas</option>
+          <option value="pdf">PDF</option>
+          <option value="imagen">Imágenes</option>
+          <option value="video">Videos</option>
+        </select>
+
+        <!-- 🔥 NUEVO: SWITCH VISTA -->
+        <button onclick="cambiarVista()">
+          🔄 Vista
+        </button>
+
         <div class="upload-group">
           <input type="file" id="fileInput" hidden>
 
