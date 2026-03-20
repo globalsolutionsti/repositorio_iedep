@@ -66,7 +66,7 @@ function generarMenu() {
 
   menu.innerHTML = `
     <a onclick="irRaiz()">📂 Documentos</a>
-    <a onclick="toast('Próximamente')">⭐ Favoritos</a>
+    <a onclick="verFavoritos()">⭐ Favoritos</a>
   `;
 }
 
@@ -559,4 +559,37 @@ function cargarStats() {
     .then(res => {
       console.log("📊 STATS:", res);
     });
+}
+function verFavoritos() {
+
+  showGlobalLoader();
+
+  safeFetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "obtenerFavoritos",
+      usuario: user.usuario
+    }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
+  })
+  .then(res => {
+
+    if (!res.status) {
+      toast("Error cargando favoritos");
+      return;
+    }
+
+    dataActual = res.data || [];
+
+    // 🔥 limpiar filtros
+    textoBusqueda = "";
+    filtroTipo = "todos";
+
+    render(dataActual);
+
+    document.getElementById("ruta").innerText = "⭐ Favoritos";
+
+  })
+  .catch(() => toast("Error conexión"))
+  .finally(() => hideGlobalLoader());
 }
