@@ -1,4 +1,4 @@
-const API = "https://script.google.com/macros/s/AKfycbwulG0iJTQ4zso3pTkE8zXXT7aQl47y1JCTjR-MBBhwYcCaJxkGPrHo2weXsHyGok27/exec";
+const API = "https://script.google.com/macros/s/AKfycbzsqG5xDLy0qqonIsbNf61mRapiqswVshEVw0OeDNjkp8dzw5y5vxW3BPOLlDHKJxOW/exec";
 
 /* =========================
    🔥 VARIABLES GLOBALES
