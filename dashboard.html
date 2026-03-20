@@ -10,71 +10,71 @@
 
 <div class="layout">
 
-  <!-- 🔥 SIDEBAR -->
+  <!-- 🔥 SIDEBAR DINÁMICO -->
   <aside class="sidebar">
     <div class="logo">IEDEP</div>
+
+    <nav id="menu"></nav>
   </aside>
 
   <!-- 🔥 MAIN -->
   <div class="main">
 
-    <!-- 🔥 HEADER -->
+    <!-- HEADER -->
     <div class="header">
-      <h1>Gestor Documental</h1>
+      <h1 id="tituloModulo">Documentos</h1>
       <div class="user">
         <span id="nombreUsuario"></span>
         <button onclick="logout()">Salir</button>
       </div>
     </div>
 
-    <!-- 🔥 CONTENT -->
+    <!-- CONTENT -->
     <div class="content">
 
-      <!-- 🔥 BREADCRUMB -->
+      <!-- BREADCRUMB -->
       <div class="breadcrumb">
-        <span onclick="irRaiz()">🏠 Inicio</span> / 
+        <span onclick="irRaiz()">🏠 Inicio</span> /
         <span id="ruta">Documentos</span>
       </div>
 
-      <!-- 🔥 BARRA DE ACCIONES -->
+      <!-- ACCIONES -->
       <div class="acciones-bar">
-
-        <button class="btn-primary" onclick="nuevaCarpeta()">+ Nueva carpeta</button>
+        <button class="btn-primary" id="btnNuevaCarpeta" onclick="nuevaCarpeta()">+ Carpeta</button>
 
         <div class="upload-group">
           <input type="file" id="fileInput" hidden>
-          <button class="btn-secondary" onclick="document.getElementById('fileInput').click()">Seleccionar archivo</button>
-          <span id="fileName">Ningún archivo seleccionado</span>
+          <button onclick="fileInput.click()">Seleccionar</button>
+          <span id="fileName">Ningún archivo</span>
           <button class="btn-success" onclick="subir()">Subir</button>
         </div>
 
-        <!-- 🔥 LOADER LOCAL -->
         <div id="loader" class="loader hidden"></div>
-
       </div>
 
-      <!-- 🔥 EXPLORADOR -->
+      <!-- GRID -->
       <div id="explorador" class="grid"></div>
 
-      <!-- 🔥 DRAG & DROP -->
-      <div id="dropZone" class="drop-zone hidden">
-        <div class="drop-content">⬇ Suelta el archivo aquí</div>
-      </div>
-
     </div>
-
   </div>
-
 </div>
 
-<!-- 🔥 TOAST -->
+<!-- 🔥 PREVIEW MODAL -->
+<div id="previewModal" class="modal hidden">
+  <div class="modal-content">
+    <span class="close" onclick="cerrarPreview()">✖</span>
+    <iframe id="previewFrame"></iframe>
+  </div>
+</div>
+
+<!-- TOAST -->
 <div id="toast" class="toast"></div>
 
-<!-- ✅ ÚNICO LOADER GLOBAL (CORRECTO) -->
+<!-- LOADER GLOBAL -->
 <div id="globalLoader" class="global-loader hidden">
   <div class="loader-box">
     <div class="spinner"></div>
-    <p>Cargando información...</p>
+    <p>Cargando...</p>
   </div>
 </div>
 
