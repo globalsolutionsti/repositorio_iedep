@@ -273,8 +273,9 @@ function render(data) {
   </div>
 `;
 // 🔥 👉 AQUÍ EXACTO
-item.addEventListener("mouseenter", () => {
-  cargarMetadata(id, item);
+item.addEventListener("mouseleave", () => {
+  const tooltip = item.querySelector(".metadata-tooltip");
+  tooltip.classList.add("hidden");
 });
     // ✅ EVENTOS REALES (AQUÍ VA EL JS)
     const btnFav = item.querySelector(".btn-fav");
