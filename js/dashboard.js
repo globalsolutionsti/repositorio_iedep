@@ -1,4 +1,4 @@
-const API = "https://script.google.com/macros/s/AKfycbx_G8WB4XBW-lqOO-dg3soIPp2VQbkOLc8gMsiiMgrx2JQS-x_4Wez4pNrw4haYFA0n/exec";
+const API = "https://script.google.com/macros/s/AKfycbxAo3h99cGd3XKyNGe2L5jRsMDfQTu8PNK3799fxpNrv4rttNNtms0WaXqgT6mF-yiQ/exec";
 
 /* =========================
    🔥 VARIABLES GLOBALES
@@ -14,7 +14,7 @@ let filtroTipo = "todos";
 let textoBusqueda = "";
 
 let favoritos = [];
-
+let archivoActualNota = null;
 /* 🔥 FIX DEFINITIVO */
 window.vista = "grid";
 
@@ -430,15 +430,24 @@ function subirArchivoDirecto(file) {
       headers: { "Content-Type": "text/plain;charset=utf-8" }
     })
       .then(res => {
-        console.log("🔥 RESPUESTA SUBIDA:", res);
+  console.log("🔥 RESPUESTA SUBIDA:", res);
 
-        if (res.status) {
-          toast("Archivo subido correctamente");
-          cargar(true);
-        } else {
-          toast("Error: " + res.error);
-        }
-      })
+  if (res.status) {
+
+    // 🔥 GUARDAMOS ID DEL ARCHIVO
+    archivoActualNota = res.id;
+
+    // 🔥 ABRIR MODAL NOTA
+    abrirModalNota();
+
+    toast("Archivo subido correctamente");
+
+    cargar(true);
+
+  } else {
+    toast("Error: " + res.error);
+  }
+})
       .catch(() => toast("Error subida"))
       .finally(() => ocultarLoader());
   };
@@ -750,4 +759,45 @@ function cargarMetadata(id, element) {
     tooltip.classList.remove("hidden");
 
   });
+}
+function abrirModalNota() {
+  document.getElementById("modalNota").classList.remove("hidden");
+}
+
+function cerrarModalNota() {
+  document.getElementById("modalNota").classList.add("hidden");
+  document.getElementById("notaTexto").value = "";
+}
+
+function guardarNotaArchivo() {
+
+  const nota = document.getElementById("notaTexto").value;
+
+  if (!nota.trim()) {
+    cerrarModalNota();
+    return;
+  }
+
+  safeFetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "guardarNota",
+      archivo_id: archivoActualNota,
+      nota: nota,
+      usuario: user.usuario
+    }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
+  })
+  .then(res => {
+    if (res.status) {
+      toast("📝 Nota guardada");
+    } else {
+      toast("Error guardando nota");
+    }
+  })
+  .catch(() => {
+    toast("Error conexión");
+  });
+
+  cerrarModalNota();
 }
