@@ -1,38 +1,45 @@
-// 🔥 TU CÓDIGO ORIGINAL + FIXES (NO OPTIMIZADO AGRESIVO)
-
 const API = "https://script.google.com/macros/s/AKfycbzKmRl5XGRXwIvE3iQi8NGh7VBEcXhHNz28THYY3OxNo2oekkH_DfpxSMryDbxWlSpO/exec";
-
-// 🔥 CERRAR TOOLTIPS
+// 🔥 CERRAR TOOLTIPS AL HACER CLICK FUERA
 document.addEventListener("click", () => {
   document.querySelectorAll(".metadata-tooltip").forEach(t => {
     t.classList.add("hidden");
   });
 });
-
-/* ========================= */
+/* =========================
+   🔥 VARIABLES GLOBALES
+========================= */
 let padreActual = 0;
 let padreDrive = "";
 let ruta = [];
 let user = null;
 
-let vista = "grid";
-let dataActual = [];
+let vista = "grid"; // grid | lista
+let dataActual = []; // 🔥 cache en memoria (rendimiento)
 let filtroTipo = "todos";
 let textoBusqueda = "";
 
 let favoritos = [];
 let archivoActualNota = null;
+/* 🔥 FIX DEFINITIVO */
+window.vista = "grid";
 
-let itemEliminar = null;
-let eliminando = false;
+/* 🔥 PERMISOS */
+const PERMISOS = {
+  admin: { crear: true, subir: true },
+  usuario: { crear: false, subir: true }
+};
 
-/* ========================= */
+/* =========================
+   🔥 INIT SEGURO
+========================= */
 document.addEventListener("DOMContentLoaded", () => {
 
   try {
     const data = localStorage.getItem("usuario");
     if (data && data !== "undefined") user = JSON.parse(data);
-  } catch {}
+  } catch (e) {
+    console.warn("Error parsing user:", e);
+  }
 
   if (!user) {
     window.location.href = "index.html";
@@ -44,37 +51,68 @@ document.addEventListener("DOMContentLoaded", () => {
   generarMenu();
   aplicarPermisos();
 
+  const fileInput = document.getElementById("fileInput");
+  if (fileInput) {
+    fileInput.addEventListener("change", function () {
+      const file = this.files[0];
+      document.getElementById("fileName").innerText =
+        file ? file.name : "Ningún archivo seleccionado";
+    });
+  }
+
   initDragDrop();
   init();
 });
 
-/* ========================= */
+/* =========================
+   🔥 MENU
+========================= */
 function generarMenu() {
   const menu = document.getElementById("menu");
-  menu.innerHTML = `
+  if (!menu) return;
+
+  menu.innerHTML = 
     <a onclick="irRaiz()">📂 Documentos</a>
     <a onclick="verFavoritos()">⭐ Favoritos</a>
-  `;
+  ;
 }
 
-/* ========================= */
+/* =========================
+   🔥 PERMISOS
+========================= */
+function aplicarPermisos() {
+  const rol = user.rol || "usuario";
+  const permisos = PERMISOS[rol];
+
+  if (!permisos.crear) {
+    const btn = document.querySelector(".btn-primary");
+    if (btn) btn.style.display = "none";
+  }
+}
+
+/* =========================
+   🔥 FETCH SEGURO
+========================= */
 async function safeFetch(url, options = null) {
   const res = await fetch(url, options);
   const text = await res.text();
 
   try {
     return JSON.parse(text);
-  } catch {
-    console.error("Respuesta inválida:", text);
+  } catch (e) {
+    console.error("❌ Backend inválido:", text);
     throw new Error("JSON inválido");
   }
 }
 
-/* ========================= */
+/* =========================
+   🔥 INIT ROOT
+========================= */
 function init() {
-
-  safeFetch(`${API}?action=getRoot`)
+  safeFetch(${API}?action=getRoot)
     .then(root => {
+
+      if (!root || !root.id) throw new Error("Root inválido");
 
       padreActual = root.id;
       padreDrive = root.drive;
@@ -86,37 +124,54 @@ function init() {
       }];
 
       actualizarRuta();
-      cargar();
+      cargar(false);
 
     })
-    .catch(() => toast("Error raíz"));
-
-  cargarFavoritosUsuario();
+    .catch(err => {
+      console.error("ERROR ROOT:", err);
+      toast("Error cargando raíz");
+    });
+cargarStats();
+cargarFavoritosUsuario();
 }
 
-/* ========================= */
-function cargar() {
+/* =========================
+   🔥 CARGAR (MEJORADO)
+========================= */
+function cargar(mostrarLoaderGlobal = true) {
 
-  showGlobalLoader();
+  if (mostrarLoaderGlobal) showGlobalLoader();
 
-  safeFetch(`${API}?action=getEstructura&padre=${padreActual}`)
+  safeFetch(${API}?action=getEstructura&padre=${padreActual})
     .then(data => {
+
+      console.log("🔥 DATA BACKEND:", data);
+
+      if (!data) throw new Error("Respuesta vacía");
 
       if (data.data) data = data.data;
 
-      dataActual = data;
-      aplicarFiltros();
+      dataActual = data; // 🔥 cache memoria
+      aplicarFiltros();  // 🔥 usa filtros + buscador
 
     })
-    .catch(() => toast("Error carga"))
-    .finally(() => hideGlobalLoader());
+    .catch(err => {
+      console.error("ERROR CARGAR:", err);
+      toast("Error cargando estructura");
+    })
+    .finally(() => {
+      hideGlobalLoader();
+    });
 }
 
-/* ========================= */
+/* =========================
+   🔥 FILTROS + BUSCADOR
+========================= */
 function aplicarFiltros() {
 
   let filtrado = [...dataActual];
 
+  // 🔍 BUSCADOR
   if (textoBusqueda) {
     filtrado = filtrado.filter(row => {
       const nombre = Array.isArray(row) ? row[1] : row.nombre;
@@ -124,103 +179,358 @@ function aplicarFiltros() {
     });
   }
 
+  // 🎛 FILTRO
+  if (filtroTipo !== "todos") {
+    filtrado = filtrado.filter(row => {
+
+      const nombre = Array.isArray(row) ? row[1].toLowerCase() : row.nombre.toLowerCase();
+      const tipo = Array.isArray(row) ? row[2] : row.tipo;
+
+      if (filtroTipo === "carpeta") return tipo === "carpeta";
+      if (filtroTipo === "pdf") return nombre.endsWith(".pdf");
+      if (filtroTipo === "imagen") return /\.(jpg|jpeg|png)/.test(nombre);
+      if (filtroTipo === "video") return nombre.endsWith(".mp4");
+
+      return true;
+    });
+  }
+
   render(filtrado);
 }
 
-/* ========================= */
-function render(data) {
+/* =========================
+   🔥 BUSCAR
+========================= */
+function buscar(valor) {
+  textoBusqueda = valor.toLowerCase();
+  aplicarFiltros();
+}
 
-  const contenedor = document.getElementById("explorador"); // 🔥 FIX
+/* =========================
+   🔥 FILTRAR
+========================= */
+function filtrarTipo(tipo) {
+  filtroTipo = tipo;
+  aplicarFiltros();
+}
+
+/* =========================
+   🔥 CAMBIAR VISTA
+========================= */
+function cambiarVista() {
+  vista = vista === "grid" ? "lista" : "grid";
+  window.vista = vista;
+  aplicarFiltros();
+}
+
+/* =========================
+   🔥 RENDER PRO (MEJORADO)
+========================= */
+function render(data) {
+  const contenedor = document.getElementById("contenedor");
   contenedor.innerHTML = "";
 
   data.forEach(itemData => {
 
-    const id = Array.isArray(itemData) ? itemData[0] : itemData.id;
-    const nombre = Array.isArray(itemData) ? itemData[1] : itemData.nombre;
-    const tipo = Array.isArray(itemData) ? itemData[2] : itemData.tipo;
-    const driveId = Array.isArray(itemData) ? itemData[3] : itemData.driveId;
+    const { id, nombre, tipo, driveId } = itemData;
 
     const item = document.createElement("div");
     item.className = "card-item";
 
-    item.innerHTML = `
+    item.innerHTML = 
       <div class="acciones-item">
-        <span class="favorito">⭐</span>
-        <span class="eliminar">🗑️</span>
+        <span class="favorito" onclick="toggleFavorito('${id}', event)">⭐</span>
+        <span class="eliminar" onclick="confirmarEliminar('${id}', '${nombre}', event)">🗑️</span>
       </div>
 
       <div class="icono">${tipo === "carpeta" ? "📁" : "📄"}</div>
       <div class="nombre">${nombre}</div>
+      <div class="tipo">${tipo}</div>
 
-      <div class="metadata-tooltip hidden"></div>
-    `;
+      <div class="metadata-tooltip hidden">
+        <div>📄 Versiones: <span id="ver-${id}">...</span></div>
+        <div>📝 Notas: <span id="nota-${id}">...</span></div>
+      </div>
+    ;
 
-    item.querySelector(".favorito").onclick = (e) => {
-      e.stopPropagation();
-      toggleFavorito(id);
-    };
-
-    item.querySelector(".eliminar").onclick = (e) => {
-      e.stopPropagation();
-      eliminarItem(id, nombre);
-    };
-
+    // 🔥 CLICK INTELIGENTE (tooltip + preview)
     item.addEventListener("click", (e) => {
 
       e.stopPropagation();
 
+      // ❌ evitar conflicto con botones
+      if (e.target.closest(".acciones-item")) return;
+
       const tooltip = item.querySelector(".metadata-tooltip");
 
+      // 👉 si ya está visible → abrir preview
       if (!tooltip.classList.contains("hidden")) {
         abrir(id, tipo, driveId, nombre);
         return;
       }
 
+      // 🔥 cerrar todos los tooltips
       document.querySelectorAll(".metadata-tooltip").forEach(t => {
         t.classList.add("hidden");
       });
 
+      // 🔥 mostrar este
       tooltip.classList.remove("hidden");
+
+      // 🔥 cargar metadata
       cargarMetadata(id, item);
     });
 
     contenedor.appendChild(item);
   });
 }
-
-/* ========================= */
+/* =========================
+   🔥 RESTO (SIN CAMBIOS)
+========================= */
 function abrir(id, tipo, driveId, nombre) {
-
   if (tipo === "carpeta") {
-
     padreActual = id;
     padreDrive = driveId;
-
     ruta.push({ id, nombre, drive: driveId });
-
     actualizarRuta();
-    cargar();
-
+    cargar(true);
   } else {
     previewArchivo(driveId);
   }
 }
 
-/* ========================= */
 function previewArchivo(driveId) {
-
   const modal = document.getElementById("previewModal");
   const frame = document.getElementById("previewFrame");
 
-  frame.src = `https://drive.google.com/file/d/${driveId}/preview`;
-
+  frame.src = https://drive.google.com/file/d/${driveId}/preview;
   modal.classList.remove("hidden");
-
-  modal.querySelector(".modal-content").style.width = "90%";
-  modal.querySelector(".modal-content").style.height = "90%";
 }
 
-/* ========================= */
+function cerrarPreview() {
+  document.getElementById("previewModal").classList.add("hidden");
+}
+
+function actualizarRuta() {
+  document.getElementById("ruta").innerHTML =
+    ruta.map((r, i) =>
+      <span style="cursor:pointer" onclick="irA(${i})">${r.nombre}</span>
+    ).join(" / ");
+}
+
+function irA(index) {
+  const nivel = ruta[index];
+
+  padreActual = nivel.id;
+  padreDrive = nivel.drive;
+
+  ruta = ruta.slice(0, index + 1);
+
+  actualizarRuta();
+  cargar(true);
+}
+
+function irRaiz() {
+  if (ruta.length > 0) {
+    const root = ruta[0];
+
+    padreActual = root.id;
+    padreDrive = root.drive;
+    ruta = [root];
+
+    actualizarRuta();
+    cargar(true);
+  }
+}
+
+/* =========================
+   🔥 NUEVA CARPETA
+========================= */
+function nuevaCarpeta() {
+  const nombre = prompt("Nombre de la carpeta");
+  if (!nombre) return;
+
+  mostrarLoader();
+
+  safeFetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "crearCarpeta",
+      nombre,
+      padre: padreActual,
+      padre_drive: padreDrive
+    }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
+  })
+    .then(res => {
+      if (res.status) {
+        toast("Carpeta creada");
+        cargar(true);
+      } else {
+        toast("Error: " + res.error);
+      }
+    })
+    .catch(() => toast("Error de conexión"))
+    .finally(() => ocultarLoader());
+}
+
+/* =========================
+   🔥 SUBIR
+========================= */
+function subir() {
+  const fileInput = document.getElementById("fileInput");
+
+  if (!fileInput.files.length) {
+    toast("Selecciona archivo");
+    return;
+  }
+
+  subirArchivoDirecto(fileInput.files[0]);
+}
+
+function subirArchivoDirecto(file) {
+  mostrarLoader();
+
+  const reader = new FileReader();
+
+  reader.onload = function (e) {
+
+    const base64 = e.target.result.split(",")[1];
+
+    safeFetch(API, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "subirArchivo",
+        nombre: file.name,
+        tipo: file.type,
+        archivo: base64,
+        padre: padreActual,
+        padre_drive: padreDrive
+      }),
+      headers: { "Content-Type": "text/plain;charset=utf-8" }
+    })
+      .then(res => {
+  console.log("🔥 RESPUESTA SUBIDA:", res);
+
+  if (res.status) {
+
+    // 🔥 GUARDAMOS ID DEL ARCHIVO
+    archivoActualNota = res.id;
+
+    // 🔥 ABRIR MODAL NOTA
+    abrirModalNota();
+
+    toast("Archivo subido correctamente");
+
+    cargar(true);
+
+  } else {
+    toast("Error: " + res.error);
+  }
+})
+      .catch(() => toast("Error subida"))
+      .finally(() => ocultarLoader());
+  };
+
+  reader.readAsDataURL(file);
+}
+
+/* =========================
+   🔥 DRAG & DROP
+========================= */
+function initDragDrop() {
+
+  const dropZone = document.getElementById("dropZone");
+
+  ["dragenter","dragover","dragleave","drop"].forEach(event=>{
+    document.addEventListener(event,e=>{
+      e.preventDefault();
+      e.stopPropagation();
+    },false);
+  });
+
+  document.addEventListener("dragenter",()=>{
+    if(dropZone) dropZone.classList.remove("hidden");
+  });
+
+  document.addEventListener("dragleave",(e)=>{
+    if(e.clientX===0 && e.clientY===0){
+      if(dropZone) dropZone.classList.add("hidden");
+    }
+  });
+
+  document.addEventListener("drop",(e)=>{
+    if(dropZone) dropZone.classList.add("hidden");
+
+    const files=e.dataTransfer.files;
+    if(files && files.length){
+      subirArchivoDirecto(files[0]);
+    }
+  });
+}
+
+/* =========================
+   🔥 UTILIDADES
+========================= */
+function mostrarLoader() {
+  document.getElementById("loader").classList.remove("hidden");
+}
+function ocultarLoader() {
+  document.getElementById("loader").classList.add("hidden");
+}
+
+function showGlobalLoader() {
+  document.getElementById("globalLoader").classList.remove("hidden");
+}
+function hideGlobalLoader() {
+  document.getElementById("globalLoader").classList.add("hidden");
+}
+
+function toast(msg) {
+  const t = document.getElementById("toast");
+  t.innerText = msg;
+  t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+
+function logout() {
+  localStorage.removeItem("usuario");
+  window.location.href = "index.html";
+}
+
+/* =========================
+   🔥 ICONOS (TU VERSIÓN COMPLETA)
+========================= */
+function obtenerIcono(nombre, tipo) {
+  if (tipo === "carpeta") return "📁";
+
+  const ext = nombre.includes(".")
+    ? nombre.split(".").pop().toLowerCase()
+    : "";
+
+  switch (ext) {
+    case "pdf": return "📕";
+    case "doc":
+    case "docx": return "📘";
+    case "xls":
+    case "xlsx": return "📗";
+    case "ppt":
+    case "pptx": return "📙";
+    case "jpg":
+    case "jpeg":
+    case "png":
+    case "gif": return "🖼️";
+    case "zip":
+    case "rar": return "🗜️";
+    case "mp4":
+    case "avi": return "🎬";
+    case "mp3":
+    case "wav": return "🎵";
+    case "txt": return "📄";
+    default: return "📄";
+  }
+}
+
 function toggleFavorito(id) {
 
   safeFetch(API, {
@@ -229,14 +539,60 @@ function toggleFavorito(id) {
       action: "toggleFavorito",
       usuario: user.usuario,
       item_id: id
-    })
+    }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
   })
-  .then(() => {
-    toast("Favorito actualizado");
+  .then(res => {
+    if (res.status) {
+
+      if (res.favorito) {
+        favoritos.push(id);
+      } else {
+        favoritos = favoritos.filter(f => f != id);
+      }
+
+      aplicarFiltros(); // 🔥 refresca UI
+
+      toast(res.favorito ? "⭐ Agregado" : "❌ Eliminado de Favoritos");
+    }
   });
 }
 
-/* ========================= */
+function esFavorito(id) {
+  return false; // luego lo conectamos a backend real
+}
+
+let itemEliminar = null;
+
+function eliminarItem(id, nombre) {
+
+  if (!id) {
+    console.error("ID inválido");
+    return;
+  }
+
+  itemEliminar = { id, nombre };
+
+  const texto = document.getElementById("confirmText");
+  const modal = document.getElementById("confirmModal");
+
+  if (!texto || !modal) {
+    console.error("Modal no encontrado");
+    return;
+  }
+
+  texto.innerText = ¿Deseas enviar "${nombre}" a la papelera?;
+  modal.classList.remove("hidden");
+}
+
+function cargarStats() {
+
+  safeFetch(${API}?action=stats)
+    .then(res => {
+      console.log("📊 STATS:", res);
+    });
+}
+
 function verFavoritos() {
 
   showGlobalLoader();
@@ -246,63 +602,111 @@ function verFavoritos() {
     body: JSON.stringify({
       action: "obtenerFavoritos",
       usuario: user.usuario
-    })
+    }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
   })
   .then(res => {
 
-    if (!res || !res.data) throw "error";
+    console.log("⭐ FAVORITOS:", res);
+
+    if (!res.status || !Array.isArray(res.data)) {
+      throw new Error("Formato inválido favoritos");
+    }
 
     dataActual = res.data;
+
+    textoBusqueda = "";
+    filtroTipo = "todos";
+
     render(dataActual);
 
     document.getElementById("ruta").innerText = "⭐ Favoritos";
 
   })
-  .catch(() => toast("Error favoritos"))
+  .catch(err => {
+    console.error("ERROR FAVORITOS:", err);
+    toast("Error cargando favoritos");
+  })
   .finally(() => hideGlobalLoader());
 }
 
-/* ========================= */
+
 function cargarFavoritosUsuario() {
-  // Se deja intacto como fallback
-}
 
-/* ========================= */
-function eliminarItem(id, nombre) {
+  safeFetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "obtenerFavoritos",
+      usuario: user.usuario
+    }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
+  })
+  .then(res => {
 
-  itemEliminar = { id, nombre };
+    let data = [];
 
-  document.getElementById("confirmText").innerText =
-    `¿Eliminar "${nombre}"?`;
+    if (res.status) {
+      data = res.data || [];
+    } else if (Array.isArray(res)) {
+      data = res;
+    } else if (res.data) {
+      data = res.data;
+    }
 
-  document.getElementById("confirmModal").classList.remove("hidden");
+    favoritos = data.map(f => {
+  if (Array.isArray(f)) return Number(f[0]);
+  if (typeof f === "object") return Number(f.id);
+  return Number(f);
+});
+
+  })
+  .catch(err => {
+    console.error("Error cargando favoritos:", err);
+  });
 }
 
 function cerrarConfirm() {
+  itemEliminar = null;
   document.getElementById("confirmModal").classList.add("hidden");
 }
 
+let eliminando = false;
+
 function confirmarEliminar() {
 
-  if (!itemEliminar) return;
+  if (!itemEliminar || eliminando) return;
+
+  eliminando = true;
+  mostrarLoader();
 
   safeFetch(API, {
     method: "POST",
     body: JSON.stringify({
       action: "eliminar",
       item_id: itemEliminar.id,
+      nombre: itemEliminar.nombre,
       usuario: user.usuario
-    })
+    }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
   })
-  .then(() => {
-    toast("Eliminado");
-    cargar();
-  });
+  .then(res => {
 
-  cerrarConfirm();
+    if (res.status) {
+      toast("🗑 Elemento enviado a papelera");
+      cargar(true);
+    } else {
+      toast("Error: " + res.error);
+    }
+
+  })
+  .catch(() => toast("Error de conexión"))
+  .finally(() => {
+    eliminando = false;
+    ocultarLoader();
+    cerrarConfirm();
+  });
 }
 
-/* ========================= */
 function cargarMetadata(id, element) {
 
   const tooltip = element.querySelector(".metadata-tooltip");
@@ -312,30 +716,68 @@ function cargarMetadata(id, element) {
     body: JSON.stringify({
       action: "obtenerMetadata",
       archivo_id: id
-    })
+    }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
   })
   .then(res => {
 
-    let html = "<strong>Versiones:</strong><br>";
+    if (!res.status) return;
 
-    (res.versiones || []).forEach(v => {
-      html += `v${v[2]} - ${v[3]}<br>`;
+    let html = "<strong>🧾 Versiones:</strong><br>";
+
+    res.versiones.forEach(v => {
+      html += v${v[2]} - ${v[3]}<br>;
     });
 
-    html += "<br><strong>Notas:</strong><br>";
+    html += "<br><strong>📝 Notas:</strong><br>";
 
-    (res.notas || []).forEach(n => {
-      html += `• ${n[2]}<br>`;
+    res.notas.forEach(n => {
+      html += • ${n[2]}<br>;
     });
 
     tooltip.innerHTML = html;
+    tooltip.classList.remove("hidden");
+
   });
 }
+function abrirModalNota() {
+  document.getElementById("modalNota").classList.remove("hidden");
+}
 
-/* ========================= */
-function toast(msg) {
-  const t = document.getElementById("toast");
-  t.innerText = msg;
-  t.classList.add("show");
-  setTimeout(() => t.classList.remove("show"), 3000);
+function cerrarModalNota() {
+  document.getElementById("modalNota").classList.add("hidden");
+  document.getElementById("notaTexto").value = "";
+}
+
+function guardarNotaArchivo() {
+
+  const nota = document.getElementById("notaTexto").value;
+
+  if (!nota.trim()) {
+    cerrarModalNota();
+    return;
+  }
+
+  safeFetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "guardarNota",
+      archivo_id: archivoActualNota,
+      nota: nota,
+      usuario: user.usuario
+    }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
+  })
+  .then(res => {
+    if (res.status) {
+      toast("📝 Nota guardada");
+    } else {
+      toast("Error guardando nota");
+    }
+  })
+  .catch(() => {
+    toast("Error conexión");
+  });
+
+  cerrarModalNota();
 }
