@@ -552,26 +552,16 @@ function esFavorito(id) {
   return false; // luego lo conectamos a backend real
 }
 
+let itemEliminar = null;
+
 function eliminarItem(id, nombre) {
 
-/*  if (!confirm("¿Enviar a papelera?")) return; */
+  itemEliminar = { id, nombre };
 
-  safeFetch(API, {
-    method: "POST",
-    body: JSON.stringify({
-      action: "eliminar",
-      item_id: id,
-      nombre: nombre,
-      usuario: user.usuario
-    }),
-    headers: { "Content-Type": "text/plain;charset=utf-8" }
-  })
-  .then(res => {
-    if (res.status) {
-      toast("Enviado a papelera");
-      cargar(true);
-    }
-  });
+  document.getElementById("confirmText").innerText =
+    `¿Deseas enviar "${nombre}" a la papelera?`;
+
+  document.getElementById("confirmModal").classList.remove("hidden");
 }
 
 function cargarStats() {
@@ -628,5 +618,43 @@ function cargarFavoritosUsuario() {
     if (res.status) {
       favoritos = res.data.map(f => f[0]); // IDs
     }
+  });
+}
+
+function cerrarConfirm() {
+  itemEliminar = null;
+  document.getElementById("confirmModal").classList.add("hidden");
+}
+
+function confirmarEliminar() {
+
+  if (!itemEliminar) return;
+
+  mostrarLoader();
+
+  safeFetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "eliminar",
+      item_id: itemEliminar.id,
+      nombre: itemEliminar.nombre,
+      usuario: user.usuario
+    }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
+  })
+  .then(res => {
+
+    if (res.status) {
+      toast("🗑 Elemento enviado a papelera");
+      cargar(true);
+    } else {
+      toast("Error: " + res.error);
+    }
+
+  })
+  .catch(() => toast("Error de conexión"))
+  .finally(() => {
+    ocultarLoader();
+    cerrarConfirm();
   });
 }
