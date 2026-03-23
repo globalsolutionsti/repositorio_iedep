@@ -267,7 +267,9 @@ function render(data) {
   <span onclick="event.stopPropagation(); toggleFavorito(${id})">
   ${esFav ? "⭐" : "☆"}
 </span>
-  <span onclick="event.stopPropagation(); eliminarItem(${id}, '${nombre}')">🗑</span>
+  <span onclick="event.stopPropagation(); eliminarItem(${id}, '${nombre}')">
+  🗑️
+</span>
 </div>
     `;
 
