@@ -1,5 +1,10 @@
 const API = "https://script.google.com/macros/s/AKfycbzKmRl5XGRXwIvE3iQi8NGh7VBEcXhHNz28THYY3OxNo2oekkH_DfpxSMryDbxWlSpO/exec";
-
+// 🔥 CERRAR TOOLTIPS AL HACER CLICK FUERA
+document.addEventListener("click", () => {
+  document.querySelectorAll(".metadata-tooltip").forEach(t => {
+    t.classList.add("hidden");
+  });
+});
 /* =========================
    🔥 VARIABLES GLOBALES
 ========================= */
@@ -272,8 +277,16 @@ function render(data) {
     <span class="btn-del">🗑️</span>
   </div>
 `;
-// 🔥 ACTIVAR METADATA (TE FALTÓ ESTO)
-item.addEventListener("mouseenter", () => {
+
+item.addEventListener("click", (e) => {
+  e.stopPropagation();
+
+  // 🔥 cerrar otros tooltips
+  document.querySelectorAll(".metadata-tooltip").forEach(t => {
+    t.classList.add("hidden");
+  });
+
+  // 🔥 mostrar el de este item
   cargarMetadata(id, item);
 });
      
