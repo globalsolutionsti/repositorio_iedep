@@ -1,4 +1,4 @@
-const API = "https://script.google.com/macros/s/AKfycbxtegvZLPYNjKJ5yWIW5B0IJwCj6TQtAREUyP6sC5agVEgbud4rOPqwlK3WcefobRU/exec";
+const API = "https://script.google.com/macros/s/AKfycbxce7Ys0hNvcLP-MhtEdsIZRx7jSThfQ-wSxQ-v-ilpVqwy43_3KtQL1RIiG2nYvHaB/exec";
 
 /* =========================
    🔥 VARIABLES GLOBALES
@@ -610,42 +610,15 @@ function verFavoritos() {
     }),
     headers: { "Content-Type": "text/plain;charset=utf-8" }
   })
-  .then(async res => {
+  .then(res => {
 
-    console.log("⭐ FAVORITOS RAW:", res);
+    console.log("⭐ FAVORITOS:", res);
 
-    let ids = [];
-
-    // 🔥 SOPORTA CUALQUIER FORMATO DEL BACKEND
-    if (res.status) {
-      ids = res.data || [];
-    } else if (Array.isArray(res)) {
-      ids = res;
-    } else if (res.data) {
-      ids = res.data;
+    if (!res.status || !Array.isArray(res.data)) {
+      throw new Error("Formato inválido favoritos");
     }
 
-    // 🔥 NORMALIZAR IDS (IMPORTANTE)
-    ids = ids.map(f => {
-      if (Array.isArray(f)) return Number(f[0]);
-      if (typeof f === "object") return Number(f.id);
-      return Number(f);
-    });
-
-    console.log("⭐ IDS NORMALIZADOS:", ids);
-
-    // 🔥 TRAER ESTRUCTURA ACTUAL
-    const estructura = await safeFetch(`${API}?action=getEstructura&padre=${padreActual}`);
-
-    let data = estructura.data || estructura;
-
-    if (!Array.isArray(data)) throw new Error("Estructura inválida");
-
-    // 🔥 FILTRAR SOLO FAVORITOS
-    dataActual = data.filter(row => {
-      const id = Array.isArray(row) ? Number(row[0]) : Number(row.id);
-      return ids.includes(id);
-    });
+    dataActual = res.data;
 
     textoBusqueda = "";
     filtroTipo = "todos";
