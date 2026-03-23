@@ -111,7 +111,22 @@
 
 <!-- TOAST -->
 <div id="toast" class="toast"></div>
+<!-- MODAL CONFIRMACIÓN -->
+<div id="confirmModal" class="modal hidden">
+  <div class="modal-content confirm-box">
+    <h3>Eliminar elemento</h3>
+    <p id="confirmText">
+      ¿Estás seguro de enviar este elemento a la papelera?
+    </p>
 
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="cerrarConfirm()">Cancelar</button>
+      <button class="btn-danger" onclick="confirmarEliminar()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
+  
 <!-- LOADER GLOBAL -->
 <div id="globalLoader" class="global-loader hidden">
   <div class="loader-box">
