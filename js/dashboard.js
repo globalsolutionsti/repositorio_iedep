@@ -272,6 +272,11 @@ function render(data) {
     <span class="btn-del">🗑️</span>
   </div>
 `;
+// 🔥 ACTIVAR METADATA (TE FALTÓ ESTO)
+item.addEventListener("mouseenter", () => {
+  cargarMetadata(id, item);
+});
+     
 // 🔥 👉 AQUÍ EXACTO
 item.addEventListener("mouseleave", () => {
   const tooltip = item.querySelector(".metadata-tooltip");
