@@ -255,39 +255,49 @@ function render(data) {
     const item = document.createElement("div");
     item.className = "card-item";
 
-    // 🔥 MODO LISTA
     if (modoVista === "lista") item.classList.add("item-lista");
+
     const esFav = favoritos.includes(id);
+
+    // ✅ HTML LIMPIO (SIN JS ADENTRO)
     item.innerHTML = `
       <div class="card-icon">${obtenerIcono(nombre, tipo)}</div>
       <div class="card-name">${nombre}</div>
       <div class="card-type">${tipo}</div>
-     
-      // 🔥 FAVORITO
-item.querySelector(".btn-fav").addEventListener("click", (e) => {
-  e.stopPropagation();
-  toggleFavorito(id);
-});
 
-// 🔥 ELIMINAR (FIX PROFESIONAL)
-item.querySelector(".btn-del").addEventListener("click", (e) => {
-  e.stopPropagation();
-  eliminarItem(id, nombre);
-});
+      <div class="acciones-item">
+        <span class="btn-fav">${esFav ? "⭐" : "☆"}</span>
+        <span class="btn-del">🗑️</span>
+      </div>
     `;
 
-   item.onclick = (e) => {
+    // ✅ EVENTOS REALES (AQUÍ VA EL JS)
+    const btnFav = item.querySelector(".btn-fav");
+    const btnDel = item.querySelector(".btn-del");
 
-  // 🔥 si clic viene de botón interno, NO abrir
-  if (e.target.closest(".acciones-item")) return;
+    if (btnFav) {
+      btnFav.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleFavorito(id);
+      });
+    }
 
-  abrir(id, tipo, driveId, nombre);
-};
+    if (btnDel) {
+      btnDel.addEventListener("click", (e) => {
+        e.stopPropagation();
+        eliminarItem(id, nombre);
+      });
+    }
+
+    // ✅ CLICK GENERAL (ABRIR)
+    item.onclick = (e) => {
+      if (e.target.closest(".acciones-item")) return;
+      abrir(id, tipo, driveId, nombre);
+    };
 
     wrapper.appendChild(item);
   });
 }
-
 /* =========================
    🔥 RESTO (SIN CAMBIOS)
 ========================= */
