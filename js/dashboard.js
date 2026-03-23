@@ -554,7 +554,7 @@ function esFavorito(id) {
 
 function eliminarItem(id, nombre) {
 
-  if (!confirm("¿Enviar a papelera?")) return;
+/*  if (!confirm("¿Enviar a papelera?")) return; */
 
   safeFetch(API, {
     method: "POST",
