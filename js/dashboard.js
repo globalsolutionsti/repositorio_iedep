@@ -263,14 +263,17 @@ function render(data) {
       <div class="card-name">${nombre}</div>
       <div class="card-type">${tipo}</div>
      
-      <div class="acciones-item">
-  <span onclick="event.stopPropagation(); toggleFavorito(${id})">
-  ${esFav ? "⭐" : "☆"}
-</span>
-  <span onclick="event.stopPropagation(); eliminarItem(${id}, '${nombre}')">
-  🗑️
-</span>
-</div>
+      // 🔥 FAVORITO
+item.querySelector(".btn-fav").addEventListener("click", (e) => {
+  e.stopPropagation();
+  toggleFavorito(id);
+});
+
+// 🔥 ELIMINAR (FIX PROFESIONAL)
+item.querySelector(".btn-del").addEventListener("click", (e) => {
+  e.stopPropagation();
+  eliminarItem(id, nombre);
+});
     `;
 
    item.onclick = (e) => {
@@ -558,12 +561,23 @@ let itemEliminar = null;
 
 function eliminarItem(id, nombre) {
 
+  if (!id) {
+    console.error("ID inválido");
+    return;
+  }
+
   itemEliminar = { id, nombre };
 
-  document.getElementById("confirmText").innerText =
-    `¿Deseas enviar "${nombre}" a la papelera?`;
+  const texto = document.getElementById("confirmText");
+  const modal = document.getElementById("confirmModal");
 
-  document.getElementById("confirmModal").classList.remove("hidden");
+  if (!texto || !modal) {
+    console.error("Modal no encontrado");
+    return;
+  }
+
+  texto.innerText = `¿Deseas enviar "${nombre}" a la papelera?`;
+  modal.classList.remove("hidden");
 }
 
 function cargarStats() {
@@ -628,10 +642,13 @@ function cerrarConfirm() {
   document.getElementById("confirmModal").classList.add("hidden");
 }
 
+let eliminando = false;
+
 function confirmarEliminar() {
 
-  if (!itemEliminar) return;
+  if (!itemEliminar || eliminando) return;
 
+  eliminando = true;
   mostrarLoader();
 
   safeFetch(API, {
@@ -656,6 +673,7 @@ function confirmarEliminar() {
   })
   .catch(() => toast("Error de conexión"))
   .finally(() => {
+    eliminando = false;
     ocultarLoader();
     cerrarConfirm();
   });
