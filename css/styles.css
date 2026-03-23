@@ -461,3 +461,88 @@ button {
 .acciones-item span:hover {
   background: #e53935; /* rojo para eliminar */
 }
+
+/* =========================
+   🔥 MODAL CONFIRMACIÓN PRO
+========================= */
+
+/* Fondo oscuro más elegante */
+#confirmModal {
+  background: rgba(0,0,0,0.55);
+}
+
+/* Caja del modal */
+#confirmModal .modal-content {
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  border-radius: 14px;
+  padding: 25px 20px;
+  animation: fadeInScale 0.2s ease;
+}
+
+/* Título */
+#confirmModal h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #7a0c12;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* Texto */
+#confirmText {
+  font-size: 14px;
+  color: #333;
+  text-align: center;
+  line-height: 1.5;
+  margin-top: 10px;
+}
+
+/* Botones */
+.modal-actions {
+  margin-top: 25px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+/* Botón cancelar */
+.btn-secondary {
+  flex: 1;
+  background: #e0e0e0;
+  color: #333;
+  border-radius: 8px;
+  padding: 10px;
+  transition: 0.2s;
+}
+
+.btn-secondary:hover {
+  background: #d5d5d5;
+}
+
+/* Botón eliminar */
+.btn-danger {
+  flex: 1;
+  background: #7a0c12; /* 🔥 color institucional */
+  color: white;
+  border-radius: 8px;
+  padding: 10px;
+  transition: 0.2s;
+}
+
+.btn-danger:hover {
+  background: #5a0a0f;
+}
+
+/* Animación suave */
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
