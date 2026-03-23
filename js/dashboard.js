@@ -279,6 +279,18 @@ function render(data) {
 `;
 
 item.addEventListener("click", (e) => {
+
+  // si hizo click en acciones (estrella o basura) → NO abrir preview
+  if (e.target.closest(".acciones-item")) return;
+
+  // si ya hay tooltip visible → NO abrir preview
+  if (!item.querySelector(".metadata-tooltip").classList.contains("hidden")) {
+    return;
+  }
+
+  // 🔥 abrir preview normal
+  abrirPreview(id);
+});
   e.stopPropagation();
 
   // 🔥 cerrar otros tooltips
