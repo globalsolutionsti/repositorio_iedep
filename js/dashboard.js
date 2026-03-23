@@ -227,111 +227,61 @@ function cambiarVista() {
    🔥 RENDER PRO (MEJORADO)
 ========================= */
 function render(data) {
+  const contenedor = document.getElementById("contenedor");
+  contenedor.innerHTML = "";
 
-  const cont = document.getElementById("explorador");
-  if (!cont) return;
+  data.forEach(itemData => {
 
-  if (!data || data.length === 0) {
-    cont.innerHTML = "<p>Sin resultados</p>";
-    return;
-  }
-
-  const modoVista = window.vista || "grid";
-  const clase = modoVista === "grid" ? "grid-cards" : "lista";
-
-  cont.innerHTML = `<div class="${clase}" id="contenedorItems"></div>`;
-
-  const wrapper = document.getElementById("contenedorItems");
-  if (!wrapper) return;
-
-  data.forEach(row => {
-
-    let id, nombre, tipo, driveId;
-
-    if (Array.isArray(row)) {
-      [id, nombre, tipo, , driveId] = row;
-    } else {
-      id = row.id;
-      nombre = row.nombre;
-      tipo = row.tipo;
-      driveId = row.driveId || row.drive;
-    }
+    const { id, nombre, tipo, driveId } = itemData;
 
     const item = document.createElement("div");
     item.className = "card-item";
 
-    if (modoVista === "lista") item.classList.add("item-lista");
-
-    const esFav = favoritos.includes(Number(id));
-
-    // ✅ HTML LIMPIO (SIN JS ADENTRO)
     item.innerHTML = `
-  <div class="card-icon">${obtenerIcono(nombre, tipo)}</div>
-  <div class="card-name">${nombre}</div>
-  <div class="card-type">${tipo}</div>
+      <div class="acciones-item">
+        <span class="favorito" onclick="toggleFavorito('${id}', event)">⭐</span>
+        <span class="eliminar" onclick="confirmarEliminar('${id}', '${nombre}', event)">🗑️</span>
+      </div>
 
-  <div class="metadata-tooltip hidden"></div>
+      <div class="icono">${tipo === "carpeta" ? "📁" : "📄"}</div>
+      <div class="nombre">${nombre}</div>
+      <div class="tipo">${tipo}</div>
 
-  <div class="acciones-item">
-    <span class="btn-fav">${esFav ? "⭐" : "☆"}</span>
-    <span class="btn-del">🗑️</span>
-  </div>
-`;
+      <div class="metadata-tooltip hidden">
+        <div>📄 Versiones: <span id="ver-${id}">...</span></div>
+        <div>📝 Notas: <span id="nota-${id}">...</span></div>
+      </div>
+    `;
 
-item.addEventListener("click", (e) => {
+    // 🔥 CLICK INTELIGENTE (tooltip + preview)
+    item.addEventListener("click", (e) => {
 
-  // si hizo click en acciones (estrella o basura) → NO abrir preview
-  if (e.target.closest(".acciones-item")) return;
+      e.stopPropagation();
 
-  // si ya hay tooltip visible → NO abrir preview
-  if (!item.querySelector(".metadata-tooltip").classList.contains("hidden")) {
-    return;
-  }
-
-  // 🔥 abrir preview normal
-  abrirPreview(id);
-});
-  e.stopPropagation();
-
-  // 🔥 cerrar otros tooltips
-  document.querySelectorAll(".metadata-tooltip").forEach(t => {
-    t.classList.add("hidden");
-  });
-
-  // 🔥 mostrar el de este item
-  cargarMetadata(id, item);
-});
-     
-// 🔥 👉 AQUÍ EXACTO
-item.addEventListener("mouseleave", () => {
-  const tooltip = item.querySelector(".metadata-tooltip");
-  tooltip.classList.add("hidden");
-});
-    // ✅ EVENTOS REALES (AQUÍ VA EL JS)
-    const btnFav = item.querySelector(".btn-fav");
-    const btnDel = item.querySelector(".btn-del");
-
-    if (btnFav) {
-      btnFav.addEventListener("click", (e) => {
-        e.stopPropagation();
-        toggleFavorito(id);
-      });
-    }
-
-    if (btnDel) {
-      btnDel.addEventListener("click", (e) => {
-        e.stopPropagation();
-        eliminarItem(id, nombre);
-      });
-    }
-
-    // ✅ CLICK GENERAL (ABRIR)
-    item.onclick = (e) => {
+      // ❌ evitar conflicto con botones
       if (e.target.closest(".acciones-item")) return;
-      abrir(id, tipo, driveId, nombre);
-    };
 
-    wrapper.appendChild(item);
+      const tooltip = item.querySelector(".metadata-tooltip");
+
+      // 👉 si ya está visible → abrir preview
+      if (!tooltip.classList.contains("hidden")) {
+        abrir(id, tipo, driveId, nombre);
+        return;
+      }
+
+      // 🔥 cerrar todos los tooltips
+      document.querySelectorAll(".metadata-tooltip").forEach(t => {
+        t.classList.add("hidden");
+      });
+
+      // 🔥 mostrar este
+      tooltip.classList.remove("hidden");
+
+      // 🔥 cargar metadata
+      cargarMetadata(id, item);
+    });
+
+    contenedor.appendChild(item);
   });
 }
 /* =========================
