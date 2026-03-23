@@ -272,7 +272,10 @@ function render(data) {
     <span class="btn-del">🗑️</span>
   </div>
 `;
-
+// 🔥 👉 AQUÍ EXACTO
+item.addEventListener("mouseenter", () => {
+  cargarMetadata(id, item);
+});
     // ✅ EVENTOS REALES (AQUÍ VA EL JS)
     const btnFav = item.querySelector(".btn-fav");
     const btnDel = item.querySelector(".btn-del");
