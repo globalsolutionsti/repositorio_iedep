@@ -45,7 +45,6 @@
           + Carpeta
         </button>
 
-        <!-- 🔥 NUEVO: BUSCADOR -->
         <input 
           type="text" 
           id="buscador"
@@ -53,7 +52,6 @@
           oninput="buscar(this.value)"
         >
 
-        <!-- 🔥 NUEVO: FILTRO -->
         <select onchange="filtrarTipo(this.value)">
           <option value="todos">Todos</option>
           <option value="carpeta">Carpetas</option>
@@ -62,7 +60,6 @@
           <option value="video">Videos</option>
         </select>
 
-        <!-- 🔥 NUEVO: SWITCH VISTA -->
         <button onclick="cambiarVista()">
           🔄 Vista
         </button>
@@ -101,17 +98,24 @@
   </div>
 </div>
 
-<!-- PREVIEW -->
+<!-- 🔥 MODAL PREVIEW (ÚNICO Y CORREGIDO) -->
 <div id="previewModal" class="modal hidden">
-  <div class="modal-content">
-    <span class="close" onclick="cerrarPreview()">✖</span>
+  <div class="modal-content preview-box">
+
+    <div class="preview-header">
+      <span>Vista previa</span>
+      <button onclick="cerrarPreview()">✖</button>
+    </div>
+
     <iframe id="previewFrame"></iframe>
+
   </div>
 </div>
 
-<!-- TOAST -->
+<!-- 🔥 TOAST -->
 <div id="toast" class="toast"></div>
-<!-- MODAL CONFIRMACIÓN -->
+
+<!-- 🔥 MODAL ELIMINAR -->
 <div id="confirmModal" class="modal hidden">
   <div class="modal-content confirm-box">
     <h3>🗑️ Eliminar elemento</h3>
@@ -126,8 +130,7 @@
   </div>
 </div>
 
-  
-<!-- LOADER GLOBAL -->
+<!-- 🔥 LOADER GLOBAL -->
 <div id="globalLoader" class="global-loader hidden">
   <div class="loader-box">
     <div class="spinner"></div>
@@ -135,6 +138,7 @@
   </div>
 </div>
 
+<!-- 🔥 MODAL NOTA -->
 <div id="modalNota" class="modal hidden">
   <div class="modal-content nota-box">
 
@@ -150,19 +154,6 @@
   </div>
 </div>
 
-<div id="previewModal" class="modal hidden">
-  <div class="modal-content preview-box">
-
-    <div class="preview-header">
-      <span>Vista previa</span>
-      <button onclick="cerrarPreview()">✖</button>
-    </div>
-
-    <iframe id="previewFrame"></iframe>
-
-  </div>
-</div>
-  
 <script src="js/dashboard.js"></script>
 
 </body>
