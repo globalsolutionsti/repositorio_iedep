@@ -597,6 +597,7 @@ function cargarStats() {
       console.log("📊 STATS:", res);
     });
 }
+
 function verFavoritos() {
 
   showGlobalLoader();
@@ -611,14 +612,23 @@ function verFavoritos() {
   })
   .then(res => {
 
-    if (!res.status) {
-      toast("Error cargando favoritos");
-      return;
+    console.log("⭐ FAVORITOS RAW:", res);
+
+    // 🔥 FIX PRO: soporta ambos formatos
+    let data = [];
+
+    if (res.status) {
+      data = res.data || [];
+    } else if (Array.isArray(res)) {
+      data = res;
+    } else if (res.data) {
+      data = res.data;
+    } else {
+      throw new Error("Formato inválido");
     }
 
-    dataActual = res.data || [];
+    dataActual = data;
 
-    // 🔥 limpiar filtros
     textoBusqueda = "";
     filtroTipo = "todos";
 
@@ -627,9 +637,14 @@ function verFavoritos() {
     document.getElementById("ruta").innerText = "⭐ Favoritos";
 
   })
-  .catch(() => toast("Error conexión"))
+  .catch(err => {
+    console.error("ERROR FAVORITOS:", err);
+    toast("Error cargando favoritos");
+  })
   .finally(() => hideGlobalLoader());
 }
+
+
 function cargarFavoritosUsuario() {
 
   safeFetch(API, {
@@ -641,9 +656,22 @@ function cargarFavoritosUsuario() {
     headers: { "Content-Type": "text/plain;charset=utf-8" }
   })
   .then(res => {
+
+    let data = [];
+
     if (res.status) {
-      favoritos = res.data.map(f => f[0]); // IDs
+      data = res.data || [];
+    } else if (Array.isArray(res)) {
+      data = res;
+    } else if (res.data) {
+      data = res.data;
     }
+
+    favoritos = data.map(f => Array.isArray(f) ? f[0] : f.id);
+
+  })
+  .catch(err => {
+    console.error("Error cargando favoritos:", err);
   });
 }
 
