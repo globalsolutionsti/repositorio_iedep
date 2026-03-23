@@ -546,3 +546,21 @@ button {
     transform: scale(1);
   }
 }
+
+.metadata-tooltip {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  background: #1e293b;
+  color: #fff;
+  padding: 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  width: 200px;
+  z-index: 10;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.card-item {
+  position: relative;
+}
