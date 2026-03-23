@@ -261,15 +261,17 @@ function render(data) {
 
     // ✅ HTML LIMPIO (SIN JS ADENTRO)
     item.innerHTML = `
-      <div class="card-icon">${obtenerIcono(nombre, tipo)}</div>
-      <div class="card-name">${nombre}</div>
-      <div class="card-type">${tipo}</div>
+  <div class="card-icon">${obtenerIcono(nombre, tipo)}</div>
+  <div class="card-name">${nombre}</div>
+  <div class="card-type">${tipo}</div>
 
-      <div class="acciones-item">
-        <span class="btn-fav">${esFav ? "⭐" : "☆"}</span>
-        <span class="btn-del">🗑️</span>
-      </div>
-    `;
+  <div class="metadata-tooltip hidden"></div>
+
+  <div class="acciones-item">
+    <span class="btn-fav">${esFav ? "⭐" : "☆"}</span>
+    <span class="btn-del">🗑️</span>
+  </div>
+`;
 
     // ✅ EVENTOS REALES (AQUÍ VA EL JS)
     const btnFav = item.querySelector(".btn-fav");
@@ -709,5 +711,39 @@ function confirmarEliminar() {
     eliminando = false;
     ocultarLoader();
     cerrarConfirm();
+  });
+}
+
+function cargarMetadata(id, element) {
+
+  const tooltip = element.querySelector(".metadata-tooltip");
+
+  safeFetch(API, {
+    method: "POST",
+    body: JSON.stringify({
+      action: "obtenerMetadata",
+      archivo_id: id
+    }),
+    headers: { "Content-Type": "text/plain;charset=utf-8" }
+  })
+  .then(res => {
+
+    if (!res.status) return;
+
+    let html = "<strong>🧾 Versiones:</strong><br>";
+
+    res.versiones.forEach(v => {
+      html += `v${v[2]} - ${v[3]}<br>`;
+    });
+
+    html += "<br><strong>📝 Notas:</strong><br>";
+
+    res.notas.forEach(n => {
+      html += `• ${n[2]}<br>`;
+    });
+
+    tooltip.innerHTML = html;
+    tooltip.classList.remove("hidden");
+
   });
 }
