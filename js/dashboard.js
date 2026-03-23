@@ -543,7 +543,7 @@ function toggleFavorito(id) {
 
       aplicarFiltros(); // 🔥 refresca UI
 
-      toast(res.favorito ? "⭐ Agregado" : "❌ Eliminado d eFavoritos");
+      toast(res.favorito ? "⭐ Agregado" : "❌ Eliminado de Favoritos");
     }
   });
 }
