@@ -428,3 +428,36 @@ button {
   padding: 10px 15px;
   cursor: pointer;
 }
+.card-item {
+  position: relative;
+}
+
+/* 🔥 Acciones ocultas por defecto */
+.acciones-item {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: flex;
+  gap: 8px;
+  opacity: 0;
+  transition: 0.2s;
+}
+
+/* 🔥 Mostrar al hover */
+.card-item:hover .acciones-item {
+  opacity: 1;
+}
+
+/* 🔥 Botones */
+.acciones-item span {
+  cursor: pointer;
+  background: rgba(0,0,0,0.6);
+  color: white;
+  padding: 5px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+.acciones-item span:hover {
+  background: #e53935; /* rojo para eliminar */
+}
