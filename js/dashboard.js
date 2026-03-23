@@ -257,7 +257,7 @@ function render(data) {
 
     if (modoVista === "lista") item.classList.add("item-lista");
 
-    const esFav = favoritos.includes(id);
+    const esFav = favoritos.includes(Number(id));
 
     // ✅ HTML LIMPIO (SIN JS ADENTRO)
     item.innerHTML = `
@@ -610,24 +610,42 @@ function verFavoritos() {
     }),
     headers: { "Content-Type": "text/plain;charset=utf-8" }
   })
-  .then(res => {
+  .then(async res => {
 
     console.log("⭐ FAVORITOS RAW:", res);
 
-    // 🔥 FIX PRO: soporta ambos formatos
-    let data = [];
+    let ids = [];
 
+    // 🔥 SOPORTA CUALQUIER FORMATO DEL BACKEND
     if (res.status) {
-      data = res.data || [];
+      ids = res.data || [];
     } else if (Array.isArray(res)) {
-      data = res;
+      ids = res;
     } else if (res.data) {
-      data = res.data;
-    } else {
-      throw new Error("Formato inválido");
+      ids = res.data;
     }
 
-    dataActual = data;
+    // 🔥 NORMALIZAR IDS (IMPORTANTE)
+    ids = ids.map(f => {
+      if (Array.isArray(f)) return Number(f[0]);
+      if (typeof f === "object") return Number(f.id);
+      return Number(f);
+    });
+
+    console.log("⭐ IDS NORMALIZADOS:", ids);
+
+    // 🔥 TRAER ESTRUCTURA ACTUAL
+    const estructura = await safeFetch(`${API}?action=getEstructura&padre=${padreActual}`);
+
+    let data = estructura.data || estructura;
+
+    if (!Array.isArray(data)) throw new Error("Estructura inválida");
+
+    // 🔥 FILTRAR SOLO FAVORITOS
+    dataActual = data.filter(row => {
+      const id = Array.isArray(row) ? Number(row[0]) : Number(row.id);
+      return ids.includes(id);
+    });
 
     textoBusqueda = "";
     filtroTipo = "todos";
@@ -667,7 +685,11 @@ function cargarFavoritosUsuario() {
       data = res.data;
     }
 
-    favoritos = data.map(f => Array.isArray(f) ? f[0] : f.id);
+    favoritos = data.map(f => {
+  if (Array.isArray(f)) return Number(f[0]);
+  if (typeof f === "object") return Number(f.id);
+  return Number(f);
+});
 
   })
   .catch(err => {
